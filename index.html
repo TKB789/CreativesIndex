@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<meta name="theme-color" content="#f6efe0">
+<title>The Creatives' Index — a random art prompt generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,900;1,9..144,400;1,9..144,500&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ---- LIGHT THEME (default) ---- */
+  html[data-theme="light"]{
+    --bg:#fbf7ee;            /* near-white warm paper */
+    --bg-2:#ffffff;          /* raised card, pure white */
+    --paper:#1a160f;         /* near-black text */
+    --paper-soft:#4a4234;    /* secondary text */
+    --muted:#7a6f58;
+    --clay:#bb4f26;          /* warm accent */
+    --clay-deep:#9c3f19;
+    --gold:#9a6b15;          /* deep gold, reads on near-white */
+    --sage:#4e7059;
+    --line:rgba(26,22,15,.16);
+    --card:#ffffff;
+    --card-ink:#1a160f;
+    --grain-op:.18;
+    --grain-blend:multiply;
+    --aura-1:rgba(187,79,38,.10);
+    --aura-2:rgba(154,107,21,.09);
+    --aura-3:rgba(78,112,89,.09);
+    --aura-4:rgba(120,90,200,.06);
+    --dot:rgba(26,22,15,.04);
+    --shadow:rgba(120,90,40,.16);
+    --shadow-soft:rgba(120,90,40,.10);
+  }
+  /* ---- DARK THEME ---- */
+  html[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#161310;
+    --bg-2:#1f1b16;
+    --paper:#f1e9d8;
+    --paper-soft:#cfc4ad;
+    --muted:#9a8f78;
+    --clay:#d9764a;
+    --clay-deep:#c0623a;
+    --gold:#e0b15e;
+    --sage:#8fb09a;
+    --line:rgba(241,233,216,.16);
+    --card:#f3ede0;
+    --card-ink:#211d16;
+    --grain-op:.5;
+    --grain-blend:overlay;
+    --aura-1:rgba(217,118,74,.22);
+    --aura-2:rgba(224,177,94,.16);
+    --aura-3:rgba(143,176,154,.16);
+    --aura-4:rgba(120,90,200,.10);
+    --dot:rgba(255,255,255,.025);
+    --shadow:rgba(0,0,0,.55);
+    --shadow-soft:rgba(0,0,0,.4);
+  }
+  :root{ color-scheme: light only; }
+  html[data-theme="dark"]{ color-scheme: dark only; }
+  *{box-sizing:border-box;margin:0;padding:0;forced-color-adjust:none}
+  html{scroll-behavior:smooth;background:var(--bg) !important}
+  body{
+    background:var(--bg) !important;
+    color:var(--paper) !important;
+    -webkit-text-fill-color:var(--paper);
+    font-family:"Spline Sans Mono",ui-monospace,monospace;
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+    position:relative;overflow-x:hidden;
+    background-image:
+      radial-gradient(var(--dot) 1px, transparent 1.3px);
+    background-size:6px 6px;
+  }
+  /* let specific elements reclaim their own text colour after the body lock */
+  h1,h1 em,.eyebrow,.lede,.disclaimer,.brief-line,.brief-line b,.brief-start,.brief-start b,
+  .tag,.pp,.pp b,.entry .name,.entry .idx,.entry .cat,.entry .desc,.entry .ex,.entry .exi,
+  .entry .seed,.entry .more,.tut,.chip,.label,.count,.divider-label,footer,.stamp,
+  .theme-toggle,.tt-label{ -webkit-text-fill-color:currentColor }
+  /* drifting colour aura behind everything */
+  body::before{
+    content:"";position:fixed;inset:-30% -10% -10% -10%;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(40% 38% at 18% 12%, var(--aura-1), transparent 60%),
+      radial-gradient(45% 40% at 88% 22%, var(--aura-2), transparent 60%),
+      radial-gradient(50% 45% at 70% 92%, var(--aura-3), transparent 60%),
+      radial-gradient(40% 40% at 8% 88%, var(--aura-4), transparent 60%);
+    filter:blur(8px);
+    animation:drift 26s ease-in-out infinite alternate;
+  }
+  @keyframes drift{
+    0%{transform:translate3d(0,0,0) scale(1)}
+    50%{transform:translate3d(-3%,2%,0) scale(1.08)}
+    100%{transform:translate3d(2%,-2%,0) scale(1.04)}
+  }
+  /* fine film grain over the whole page */
+  body::after{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:var(--grain-op);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+    mix-blend-mode:var(--grain-blend);
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+
+  /* masthead */
+  header{padding:54px 0 30px;position:relative}
+  header > .rule-top,header > .eyebrow,header > h1,header > .lede,header > .commission{position:relative;z-index:1}
+  /* continuous single-line art motif */
+  .lineart{position:absolute;top:24px;right:-12px;width:min(44vw,330px);height:auto;
+    color:var(--clay);opacity:.20;pointer-events:none;z-index:0}
+  .lineart .la-main{stroke-dasharray:1500;stroke-dashoffset:1500;animation:draw 3.2s .3s ease forwards}
+  .lineart .la-dot{fill:currentColor;opacity:0;animation:appear .4s 3.3s ease forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes appear{to{opacity:1}}
+  /* small floating motifs */
+  .motif{position:absolute;pointer-events:none;z-index:0;color:var(--clay);opacity:.16}
+  .motif-star{width:34px;top:64px;left:-6px;color:var(--gold);animation:float1 9s ease-in-out infinite}
+  .motif-spiral{width:46px;bottom:18px;right:8%;color:var(--sage);animation:float2 11s ease-in-out infinite}
+  .motif-wave{width:78px;top:46%;left:38%;color:var(--clay);opacity:.12;animation:float1 13s ease-in-out infinite}
+  @keyframes float1{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(6deg)}}
+  @keyframes float2{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(8px) rotate(-8deg)}}
+  .rule-top{border:0;border-top:2px solid var(--paper);opacity:.85;margin-bottom:0}
+  .eyebrow{
+    font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--paper-soft);
+    padding-top:14px;display:flex;align-items:center;gap:12px;
+  }
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+  h1{
+    font-family:"Fraunces",serif;font-weight:900;
+    font-size:clamp(54px,13vw,140px);line-height:.86;letter-spacing:-.035em;
+    margin:18px 0 0;color:var(--paper);text-wrap:balance;
+  }
+  h1 em{font-style:italic;font-weight:400;color:var(--clay);display:inline-block;position:relative}
+  h1 em::after{content:"";position:absolute;left:0;right:6%;bottom:.04em;height:.07em;
+    background:var(--clay);opacity:.55;border-radius:2px;
+    transform:scaleX(0);transform-origin:left;animation:underline 1.1s .35s ease forwards}
+  @keyframes underline{to{transform:scaleX(1)}}
+  .lede{
+    font-family:"Fraunces",serif;font-style:italic;font-weight:400;
+    font-size:clamp(18px,2.4vw,24px);color:var(--paper-soft);
+    max-width:44ch;margin-top:22px;line-height:1.45;
+  }
+
+  /* generator */
+  .commission{margin-top:38px;display:grid;gap:22px}
+  .stamp{
+    justify-self:start;font-family:"Spline Sans Mono",monospace;
+    font-size:15px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;
+    color:var(--bg);background:var(--clay);border:none;padding:18px 32px;cursor:pointer;
+    border-radius:36px;
+    box-shadow:0 0 0 2px var(--clay),4px 5px 0 var(--shadow);
+    transition:transform .12s,box-shadow .12s,background .2s;
+  }
+  .stamp:hover{background:var(--gold);box-shadow:0 0 0 2px var(--gold),6px 7px 0 var(--shadow);transform:translate(-1px,-1px)}
+  .stamp:active{transform:translate(2px,2px);box-shadow:0 0 0 2px var(--clay),1px 1px 0 var(--shadow)}
+  .stamp:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+  .stamp .dice{margin-right:10px;display:inline-block;transition:transform .4s ease}
+  .stamp:hover .dice{transform:rotate(180deg)}
+  .levels{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+  .levels-label{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--paper-soft);width:100%;margin-bottom:6px}
+  .lvl{
+    font-family:"Spline Sans Mono",monospace;font-size:11.5px;letter-spacing:.02em;
+    background:var(--bg-2);border:1.5px solid var(--line);color:var(--paper-soft);
+    padding:7px 13px;border-radius:20px;cursor:pointer;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .lvl:hover{border-color:var(--clay);color:var(--paper)}
+  .lvl[aria-pressed="true"]{background:var(--clay);color:#fff;border-color:var(--clay)}
+  .lvl:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  /* favourites */
+  .brief-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:auto;padding-top:18px}
+  .fav-btn{
+    font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--bg-2);border:1px solid var(--line);color:var(--paper-soft);
+    padding:6px 13px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .fav-btn .fav-ico{font-size:14px;line-height:1}
+  .fav-btn:hover{border-color:var(--clay);color:var(--clay)}
+  .fav-btn[aria-pressed="true"]{background:var(--clay);border-color:var(--clay);color:#fff}
+  .fav-btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .tut-brief{margin:0}
+  .favs{margin:34px 0 0;border:1.5px solid var(--line);border-radius:6px;
+    background:color-mix(in srgb, var(--clay) 5%, var(--bg-2));padding:20px 22px}
+  .favs-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .favs-title{font-family:"Fraunces",serif;font-size:22px;font-weight:600;color:var(--paper);
+    display:flex;align-items:center;gap:10px}
+  .favs-count{font-family:"Spline Sans Mono",monospace;font-size:12px;font-weight:500;
+    background:var(--clay);color:#fff;border-radius:20px;padding:2px 9px;letter-spacing:.04em}
+  .favs-clear{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;background:none;border:1px solid var(--line);color:var(--paper-soft);
+    padding:5px 11px;border-radius:20px;cursor:pointer;transition:border-color .15s,color .15s}
+  .favs-clear:hover{border-color:var(--clay);color:var(--clay)}
+  .favs-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .fav-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:4px;
+    background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--cc,var(--clay))}
+  .fav-item .fav-line{font-family:"Fraunces",serif;font-size:16px;line-height:1.4;color:var(--paper);flex:1}
+  .fav-item .fav-line b{font-style:italic;color:var(--cc,var(--clay))}
+  .fav-item .fav-cat{font-family:"Spline Sans Mono",monospace;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--cc,var(--clay));display:block;margin-bottom:4px}
+  .fav-remove{background:none;border:0;color:var(--paper-soft);cursor:pointer;font-size:18px;
+    line-height:1;padding:2px 4px;flex:none;transition:color .15s}
+  .fav-remove:hover{color:var(--clay)}
+  .fav-remove:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  /* pinned favourites button */
+  .fav-pin{position:fixed;right:16px;bottom:16px;z-index:50;
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:"Spline Sans Mono",monospace;font-size:13px;font-weight:600;letter-spacing:.06em;
+    background:var(--clay);color:#fff;border:none;cursor:pointer;
+    padding:12px 16px;border-radius:30px;box-shadow:0 6px 20px -6px var(--shadow),0 0 0 2px var(--clay);
+    transition:transform .15s, box-shadow .15s;}
+  .fav-pin:hover{transform:translateY(-2px);box-shadow:0 10px 26px -8px var(--shadow),0 0 0 2px var(--clay)}
+  .fav-pin:active{transform:translateY(0)}
+  .fav-pin:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+  .fav-pin-ico{font-size:15px;line-height:1}
+  .fav-pin-count{background:rgba(255,255,255,.25);border-radius:20px;padding:1px 8px;font-size:12px}
+  @media (max-width:560px){.fav-pin{right:12px;bottom:12px;padding:11px 15px}}
+  .btnrow{display:flex;flex-wrap:wrap;gap:12px}
+  .stamp-alt{background:transparent;color:var(--paper);
+    box-shadow:0 0 0 2px var(--paper-soft),4px 5px 0 rgba(0,0,0,.45)}
+  .stamp-alt:hover{background:rgba(241,233,216,.08);color:var(--paper);
+    box-shadow:0 0 0 2px var(--paper),6px 7px 0 rgba(0,0,0,.45)}
+  .stamp-alt:active{box-shadow:0 0 0 2px var(--paper-soft),1px 1px 0 rgba(0,0,0,.45)}
+
+  .brief{position:relative;background:
+      linear-gradient(180deg, rgba(224,177,94,.06), transparent 40%), var(--bg-2);
+    border:1.5px solid var(--line);
+    border-left:3px solid var(--gold);padding:26px 28px 28px;max-width:640px;border-radius:3px;
+    box-shadow:0 18px 40px -24px var(--shadow), inset 0 1px 0 rgba(241,233,216,.04);
+    overflow:hidden;
+    display:flex;flex-direction:column;min-height:440px}
+  .brief::before{ /* oversized ghost quote mark */
+    content:"\201C";position:absolute;top:-26px;right:6px;font-family:"Fraunces",serif;
+    font-size:170px;line-height:1;color:var(--gold);opacity:.07;pointer-events:none}
+  .brief.flash{animation:flash .5s ease}
+  .brief .tag{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
+    display:flex;align-items:center;gap:10px;position:relative}
+  .brief .tag::before{content:"✦";font-size:13px}
+  .brief-line{font-family:"Fraunces",serif;font-weight:500;font-size:clamp(22px,4.4vw,30px);
+    line-height:1.32;color:var(--paper);margin:14px 0 16px;letter-spacing:-.01em;position:relative}
+  .brief-line b{font-style:italic;font-weight:600;color:var(--clay)}
+  .disclaimer{font-family:"Fraunces",serif;font-style:italic;font-size:14.5px;
+    color:var(--paper-soft);max-width:48ch;margin:0;line-height:1.5}
+  /* hand-drawn squiggle divider */
+  .divider{position:relative;margin:54px 0 8px;color:var(--clay);opacity:.7}
+  .divider svg{width:100%;height:34px;display:block}
+  .divider-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    background:var(--bg);padding:0 16px;font-family:"Spline Sans Mono",monospace;
+    font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--paper-soft)}
+  /* corner ticks on the prompt card */
+  .brief-start{font-family:"Fraunces",serif;font-size:15px;line-height:1.55;
+    color:var(--paper-soft);background:rgba(143,176,154,.10);border-left:2px solid var(--sage);
+    padding:11px 14px;border-radius:2px;margin:2px 0 16px;position:relative}
+  .brief-start b{color:var(--sage);font-style:normal;font-weight:600;
+    text-transform:uppercase;letter-spacing:.08em;font-size:11px;font-family:"Spline Sans Mono",monospace}
+  .brief-parts{display:flex;flex-wrap:wrap;gap:8px;position:relative}
+  .brief-parts .pp{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.06em;
+    border:1px solid var(--line);color:var(--paper-soft);padding:5px 10px;border-radius:20px;
+    background:rgba(241,233,216,.02);
+    opacity:0;transform:translateY(4px);animation:chipin .4s ease forwards}
+  .brief-parts .pp:nth-child(1){animation-delay:.02s}
+  .brief-parts .pp:nth-child(2){animation-delay:.07s}
+  .brief-parts .pp:nth-child(3){animation-delay:.12s}
+  .brief-parts .pp:nth-child(4){animation-delay:.17s}
+  .brief-parts .pp:nth-child(5){animation-delay:.22s}
+  @keyframes chipin{to{opacity:1;transform:none}}
+  .brief-parts .pp b{color:var(--gold);font-weight:600;text-transform:uppercase;
+    letter-spacing:.12em;margin-right:6px;font-size:10px}
+
+  .card{
+    position:relative;background:var(--card);color:var(--card-ink);
+    padding:30px 34px 30px;max-width:640px;border-radius:3px;
+    box-shadow:6px 8px 0 rgba(0,0,0,.5);
+  }
+  .card::before{ /* stitched top edge accent */
+    content:"";position:absolute;left:24px;right:24px;top:14px;height:2px;
+    background:repeating-linear-gradient(90deg,var(--clay) 0 8px,transparent 8px 16px);
+    opacity:.5;
+  }
+  .card .tag{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--clay-deep);
+    display:flex;align-items:center;gap:10px;margin-top:8px}
+  .card .tag::before{content:"❦";font-size:14px}
+  .card .haiku{
+    font-family:"Fraunces",serif;font-weight:500;
+    font-size:clamp(24px,4.6vw,32px);line-height:1.34;white-space:pre-line;
+    margin:14px 0 16px;color:var(--card-ink);letter-spacing:-.01em;
+  }
+  .card .foot{font-size:12px;letter-spacing:.14em;color:#5a5446;text-transform:uppercase;
+    display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+  .card .foot b{color:var(--clay-deep);font-weight:600}
+  .card .cardex{flex-basis:100%;letter-spacing:.02em;text-transform:none;font-style:italic;
+    font-family:"Fraunces",serif;font-size:14px;color:#6a6354;margin-top:4px}
+  .card.flash{animation:flash .5s ease}
+  @keyframes flash{0%{transform:rotate(-.5deg) scale(.99)}100%{transform:none}}
+
+  /* filter */
+  .controls{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:center;
+    padding:44px 0 6px;line-height:1.5;max-width:760px;margin:0 auto;text-align:center}
+  .controls .label{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--paper-soft);width:100%;margin-bottom:14px;
+    display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+  .reshuffle{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;background:var(--bg-2);border:1px solid var(--line);color:var(--paper-soft);
+    padding:5px 11px;border-radius:20px;cursor:pointer;transition:border-color .15s,color .15s}
+  .reshuffle:hover{border-color:var(--clay);color:var(--clay)}
+  .reshuffle:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .chip{
+    background:none;border:0;padding:2px 2px;cursor:pointer;position:relative;
+    color:var(--paper);line-height:1.1;
+    transition:color .15s, opacity .15s, transform .25s ease;
+    display:inline-flex;align-items:baseline;gap:6px;
+    transform:rotate(var(--rot,0deg)) translateY(var(--dy,0));
+  }
+  /* font family/style variety for a hand-set feel (sizes set inline per reload) */
+  .chip{font-family:"Fraunces",serif;font-weight:600}
+  .chip:nth-child(3n){font-family:"Spline Sans Mono",monospace;font-weight:500;letter-spacing:-.01em}
+  .chip:nth-child(4n){font-family:"Fraunces",serif;font-style:italic;font-weight:400}
+  .chip:nth-child(2n){font-weight:500}
+  .chip:hover{transform:rotate(0deg) translateY(var(--dy,0)) scale(1.04)}
+  .chip .dot{width:.4em;height:.4em;border-radius:50%;background:var(--cc,var(--clay));flex:none;
+    align-self:center}
+  /* colour wash underline that grows on hover/active */
+  .chip::after{content:"";position:absolute;left:0;right:100%;bottom:-1px;height:3px;
+    background:var(--cc,var(--clay));border-radius:2px;transition:right .22s ease;opacity:.85}
+  .chip:hover{color:var(--cc,var(--clay))}
+  .chip:hover::after{right:0}
+  .chip[aria-pressed="true"]{color:var(--cc,var(--clay))}
+  .chip[aria-pressed="true"]::after{right:0;height:4px}
+  .chip[data-cat="All"]{--cc:var(--paper)}
+  .chip[data-cat="All"] .dot{display:none}
+  .chip:not([aria-pressed="true"]){opacity:.6}
+  .chip:hover,.chip[aria-pressed="true"]{opacity:1}
+  .chip:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:2px}
+
+  .count{font-size:12px;color:var(--paper-soft);letter-spacing:.12em;padding:18px 0 0;text-align:center}
+
+  /* catalog */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:0;
+    border-top:2px solid var(--paper);margin-top:14px}
+  .entry{
+    border-bottom:1.5px solid var(--line);border-right:1.5px solid var(--line);
+    background:transparent;color:var(--paper);transition:background .2s, transform .2s;
+    position:relative;display:flex;flex-direction:column;
+  }
+  .entry::before{content:"";position:absolute;top:-1.5px;left:0;width:0;height:3px;
+    background:var(--cc,var(--clay));transition:width .25s ease;z-index:1}
+  .entry:hover{background:var(--bg-2);transform:translateY(-2px)}
+  .entry:hover::before{width:100%}
+  .entry-body{
+    padding:22px 22px 14px;display:flex;flex-direction:column;gap:9px;
+  }
+  .entry .idx{font-size:11px;color:var(--cc,var(--clay));letter-spacing:.14em;font-weight:600}
+  .entry .name{font-family:"Fraunces",serif;font-size:27px;font-weight:600;line-height:1.02;
+    letter-spacing:-.015em;color:var(--paper)}
+  .entry .cat{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--paper-soft)}
+  .entry .desc{font-family:"Fraunces",serif;font-size:15.5px;color:var(--paper-soft);line-height:1.48}
+  .entry .ex{font-size:12.5px;color:var(--paper);line-height:1.5;display:flex;flex-direction:column;gap:3px}
+  .entry .ex b{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--paper-soft);font-weight:500;margin-bottom:1px}
+  .entry .exi{display:block;padding-left:13px;position:relative;color:var(--paper-soft)}
+  .entry .exi::before{content:"·";position:absolute;left:2px;color:var(--clay)}
+  .tut{
+    align-self:flex-start;margin:0 22px 20px;
+    font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--cc,var(--clay));text-decoration:none;
+    border:1px solid var(--cc,var(--clay));border-radius:20px;padding:6px 13px;
+    transition:background .15s,color .15s;
+  }
+  .tut:hover{background:var(--cc,var(--clay));color:var(--bg)}
+  .tut:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .tut-brief{margin:16px 0 0}
+
+  footer{border-top:2px solid var(--paper);margin-top:46px;padding:28px 0 80px;
+    font-size:12px;color:var(--paper-soft);letter-spacing:.06em;line-height:1.7}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media (max-width:560px){header{padding:38px 0 22px}.card{padding:26px 24px}.stamp{font-size:14px;padding:16px 26px}}
+</style>
+</head>
+<body>
+<button class="fav-pin" id="favPin" hidden aria-label="Jump to saved prompts">
+  <span class="fav-pin-ico">★</span><span class="fav-pin-count" id="favPinCount">0</span>
+</button>
+<div class="wrap">
+  <header>
+    <hr class="rule-top">
+    <div class="eyebrow">No wrong turns — only happy accidents</div>
+    <svg class="lineart" viewBox="0 0 460 300" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path class="la-main" d="M30,180 C30,110 90,80 150,110 C210,140 170,210 110,195 C55,182 80,100 160,92
+                 C250,83 270,40 340,58 C410,76 395,150 330,160 C265,170 280,95 360,100
+                 C420,104 445,135 435,180 C427,216 385,232 350,214"/>
+        <circle class="la-dot" cx="350" cy="214" r="5"/>
+      </g>
+    </svg>
+    <svg class="motif motif-star" viewBox="0 0 40 40" aria-hidden="true"><path d="M20,3 L24,16 L37,20 L24,24 L20,37 L16,24 L3,20 L16,16 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    <svg class="motif motif-spiral" viewBox="0 0 50 50" aria-hidden="true"><path d="M25,25 m0,0 a6,6 0 1,1 -1,0 a13,13 0 1,1 -2,0 a20,20 0 1,1 -3,0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <svg class="motif motif-wave" viewBox="0 0 90 24" aria-hidden="true"><path d="M3,12 C18,2 27,22 42,12 C57,2 66,22 81,12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <h1>The Creatives' <em>Index</em></h1>
+    <p class="lede">Every kind of art and craft we could name, fused at random into a prompt — a craft, a subject, a setting, a mood, and a twist. Some will be lovely, some absolutely nonsensical, and that is the whole point. Have fun, and make the impossible ones anyway.</p>
+
+    <div class="commission">
+      <div class="brief" id="brief" aria-live="polite">
+        <span class="tag" id="briefTag">Your prompt</span>
+        <div class="brief-line" id="briefLine"></div>
+        <div class="brief-start" id="briefStart" hidden></div>
+        <div class="brief-actions">
+          <button class="fav-btn" id="favBtn" aria-pressed="false"><span class="fav-ico">♡</span> <span class="fav-txt">Save</span></button>
+          <a class="tut tut-brief" id="briefTut" href="#" target="_blank" rel="noopener">Find tutorials ↗</a>
+        </div>
+      </div>
+      <button class="stamp" id="mix"><span class="dice">⚄</span>New prompt</button>
+      <div class="levels" role="group" aria-label="Materials and equipment level">
+        <span class="levels-label">Materials needed</span>
+        <button class="lvl" data-level="any" aria-pressed="true">Any</button>
+        <button class="lvl" data-level="low" aria-pressed="false">Low — pen &amp; paper</button>
+        <button class="lvl" data-level="moderate" aria-pressed="false">Moderate — some kit</button>
+        <button class="lvl" data-level="advanced" aria-pressed="false">Advanced — studio gear</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="favs" id="favs" hidden>
+    <div class="favs-head">
+      <span class="favs-title">Saved prompts <span class="favs-count" id="favsCount">0</span></span>
+      <button class="favs-clear" id="favsClear">Clear all</button>
+    </div>
+    <ul class="favs-list" id="favsList"></ul>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 40" preserveAspectRatio="none">
+      <path d="M0,20 C60,4 120,36 180,20 S300,4 360,20 S480,36 540,20 S660,4 720,20 S840,36 900,20 S1020,4 1080,20 S1200,36 1200,20"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span class="divider-label">The catalogue</span>
+  </div>
+
+  <div class="controls" id="controls"><span class="label">Filter — a fresh cluster each time <button class="reshuffle" id="reshuffle" aria-label="Rearrange the categories">↻ rearrange</button></span></div>
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    The Creatives' Index — a hand-curated field guide to making.<br>
+    Tap any entry below for its examples, or generate a fresh random prompt up top.
+  </footer>
+</div>
+
+<script>
+const ENTRIES = [
+  {name:"Graphite Drawing",category:"Drawing & Painting",desc:"Mark-making with pencil, from quick gesture to full tonal rendering.",examples:["A loose study of folded cloth in 2B and 6B.","A five-minute gesture of someone reading.","A slow, smudged sphere with one light source."],haiku:"grey dust on the page\nthe pencil finds an edge first\nthen the whole of it"},
+  {name:"Charcoal Drawing",category:"Drawing & Painting",desc:"Bold, smudgeable black from burnt wood or compressed sticks.",examples:["A high-contrast self-portrait by lamplight.","Trees reduced to mass and shadow.","A hand, built up then lifted with an eraser."],haiku:"burnt wood on rough tooth\nshadows arrive all at once\nlight is what you lift"},
+  {name:"Ink Drawing",category:"Drawing & Painting",desc:"Line and wash with pen, brush, or nib in permanent ink.",examples:["A cross-hatched portrait, no eraser allowed.","A rainy street in brush and wash.","A single continuous-line cat."],haiku:"black river, no shore\nthe nib commits every line\nthere is no taking back"},
+  {name:"Watercolour",category:"Drawing & Painting",desc:"Transparent pigment in water, layered wet or dry on paper.",examples:["A wet-in-wet sky bleeding into hills.","A loose lemon, three washes only.","A rainy window, edges left to bloom."],haiku:"water leads, you follow\nthe bloom spreads where it pleases\nlet the white stay white"},
+  {name:"Gouache",category:"Drawing & Painting",desc:"Opaque water paint with a flat, matte, poster-like finish.",examples:["A flat-colour mountain at three tones.","A small still life of pears.","A retro travel poster of your town."],haiku:"matte and sure of itself\nno light shines through this colour\nit simply declares"},
+  {name:"Oil Painting",category:"Drawing & Painting",desc:"Slow-drying pigment in oil; rich blends and thick impasto.",examples:["A still life of lemons under raking light.","A grey-day seascape, palette knife only.","A loose alla prima portrait in one sitting."],haiku:"slow as the season\nthe brush stacks light upon light\ndry in its own time"},
+  {name:"Acrylic Painting",category:"Drawing & Painting",desc:"Fast-drying polymer paint, opaque or thinned like wash.",examples:["A bold flat-colour cityscape.","A textured abstract in palette-knife slabs.","A quick underpainting blocked in an hour."],haiku:"quick to set, quick mind\nthe colour will not wait long\npaint while the day holds"},
+  {name:"Pastel",category:"Drawing & Painting",desc:"Pure pigment sticks blended by hand into soft, dusty colour.",examples:["A dusk sky in three blended bands.","A portrait built in broken colour.","A field of poppies, edges left rough."],haiku:"pigment, almost air\nthe fingertip does the mixing\ncolour clings to tooth"},
+  {name:"Spray Paint / Mural",category:"Drawing & Painting",desc:"Large-scale painting on walls, with aerosol or brush.",examples:["A stencil portrait on a back-alley wall.","A community mural of local birds.","A lettering piece with a fade and a glow."],haiku:"the wall holds still\nthe can hisses out a world\nweather will judge it"},
+  {name:"Linocut",category:"Printmaking",desc:"Relief print carved from soft linoleum, inked and pressed.",examples:["A high-contrast black-and-white heron.","A two-block reduction print of a sunset.","A repeating leaf pattern for wrapping paper."],haiku:"carve away the light\nwhat remains will hold the ink\npress, and lift the leaf"},
+  {name:"Woodcut",category:"Printmaking",desc:"Relief print cut into the plank or end-grain of wood.",examples:["A stormy wave in the old ukiyo-e spirit.","A bold portrait with visible tool marks.","A bookplate with your initials."],haiku:"the grain fights the knife\nwhat survives the cut prints black\nthe tree speaks again"},
+  {name:"Etching",category:"Printmaking",desc:"Intaglio lines bitten into metal by acid, then printed.",examples:["A fine-lined townscape.","A moody aquatint night scene.","A small drypoint of bare winter trees."],haiku:"acid eats the plate\nevery scratch becomes a vein\nthe press wrings it black"},
+  {name:"Screen Printing",category:"Printmaking",desc:"Ink pushed through a stencilled mesh, layer by layer.",examples:["A four-colour gig poster, registered by eye.","A run of printed tote bags.","A halftone portrait in one bold colour."],haiku:"pull the squeegee true\none screen, one colour, one breath\nthen the next laid down"},
+  {name:"Monotype",category:"Printmaking",desc:"A one-of-a-kind print pulled from a painted plate.",examples:["A ghostly landscape wiped from a glass plate.","A single textured abstract.","A pressed botanical, leaf inked directly."],haiku:"painted, pressed, and gone\nthere will be no second one\nthe plate keeps nothing"},
+  {name:"Cyanotype",category:"Printmaking",desc:"Sunlight printing in Prussian blue, from placed objects or negatives.",examples:["Ferns laid on coated paper in the sun.","A blue print from a film negative.","A patterned scarf, sun-printed."],haiku:"sun does the printing\nwhere the fern lay, white remains\nall else turns to blue"},
+  {name:"Clay Sculpture",category:"Sculpture & 3D",desc:"Modelling form by hand from soft, responsive clay.",examples:["A palm-sized figure built from coils.","A portrait bust, roughed then refined.","A set of small abstract forms."],haiku:"the thumb leaves a valley\nclay remembers every touch\nfire will keep it all"},
+  {name:"Wood Carving",category:"Sculpture & 3D",desc:"Cutting form from a single block, with the grain or against it.",examples:["A spoon carved from green birch.","A small bird relief.","A walking-stick handle shaped to the hand."],haiku:"grain has its own mind\nthe gouge listens, then agrees\nshavings curl to floor"},
+  {name:"Stone Carving",category:"Sculpture & 3D",desc:"Removing stone to reveal form; nothing can be added back.",examples:["A relief chiselled into limestone.","A smooth river-stone face.","A small marble leaf."],haiku:"the chisel argues\nstone gives up only what's struck\npatience is the tool"},
+  {name:"Metal Sculpture",category:"Sculpture & 3D",desc:"Welding, forging, or fabricating form from metal.",examples:["A welded steel tree for a garden.","A figure built from scrap rebar.","A kinetic mobile of balanced rods."],haiku:"sparks fall like seeds\ncold metal learns a new shape\nrust will sign it later"},
+  {name:"Assemblage",category:"Sculpture & 3D",desc:"Composing sculpture from found and salvaged objects.",examples:["A bird built from rusted hinges and keys.","A clock-part insect.","A shadow box of beach-found plastic."],haiku:"the junk drawer speaks up\nbroken things lean together\nand become a bird"},
+  {name:"3D Printing",category:"Sculpture & 3D",desc:"Building objects layer by layer from digital models.",examples:["A printed replacement knob for an old radio.","An articulated dragon, printed in place.","A topographic model of a local hill."],haiku:"thread upon thin thread\nthe machine grows a small world\nfrom a field of math"},
+  {name:"Paper Mâché",category:"Sculpture & 3D",desc:"Sculpting hollow form from paper pulp and paste.",examples:["A festival mask over a balloon.","A bowl from torn newspaper.","A piñata shaped like a star."],haiku:"wet paper, slow hands\nlayer dries upon layer\nlight as the air inside"},
+  {name:"Wheel Throwing",category:"Ceramics",desc:"Raising vessels from spinning clay on a potter's wheel.",examples:["A set of four tea bowls, centred and trimmed.","A tall cylinder pulled thin.","A wide shallow serving dish."],haiku:"the wheel hums beneath\nmud rises into a cup\nas the world spins round"},
+  {name:"Hand-Building",category:"Ceramics",desc:"Forming pottery with coils, slabs, and pinch — no wheel.",examples:["A slab-built rectangular planter.","A pinch-pot incense holder.","A coiled vase with a wide belly."],haiku:"no wheel, only hands\nslab by slab the wall goes up\nseams pressed into stone"},
+  {name:"Glazing",category:"Ceramics",desc:"Coating fired clay with glass that the kiln transforms.",examples:["A celadon dip over carved porcelain.","A wax-resist pattern under a dark glaze.","A glossy red tested across five tiles."],haiku:"dull powder, dull wait\nthe kiln keeps its one secret\nopens it as glass"},
+  {name:"Raku",category:"Ceramics",desc:"Fast firing and smoke reduction for crackle and metallic effects.",examples:["A crackle-glazed bowl pulled red-hot.","A vessel smoked black in sawdust.","A copper-flash lidded jar."],haiku:"snatched from the white heat\nsmoke crawls into every crack\nfire writes the surface"},
+  {name:"Weaving",category:"Textile & Fibre",desc:"Interlacing warp and weft threads on a loom.",examples:["A small tapestry sampler of plain and twill.","A striped table runner.","A woven wall hanging with raw fringe."],haiku:"warp held taut and still\nthe weft walks over, under\ncloth grows by a thread"},
+  {name:"Knitting",category:"Textile & Fibre",desc:"Looping yarn into elastic fabric with two needles.",examples:["A ribbed wool hat in the round.","A simple garter-stitch scarf.","A pair of cabled fingerless gloves."],haiku:"one loop pulls the next\nthe whole winter in your lap\nrow by quiet row"},
+  {name:"Crochet",category:"Textile & Fibre",desc:"Building fabric with a single hooked needle, loop by loop.",examples:["A granny-square cushion cover.","A small amigurumi whale.","A lacy summer market bag."],haiku:"the hook ducks and pulls\none strand becomes a meadow\nworked from a small loop"},
+  {name:"Embroidery",category:"Textile & Fibre",desc:"Decorating cloth with needle and thread in stitches.",examples:["A hoop of wildflowers in satin stitch.","A monogram on a linen napkin.","A mended jacket, visibly stitched."],haiku:"the needle dives down\nsurfaces a petal's edge\nthe linen now blooms"},
+  {name:"Quilting",category:"Textile & Fibre",desc:"Stitching layered fabric into patterned, padded cloth.",examples:["A nine-patch throw in scrap cottons.","A modern improv wall quilt.","A baby quilt of soft flannels."],haiku:"scraps that knew other lives\nstitched into one warm landscape\nthe bed keeps them close"},
+  {name:"Felting",category:"Textile & Fibre",desc:"Matting loose wool into solid fabric by water or needle.",examples:["A needle-felted woodland mouse.","A pair of wet-felted slippers.","A felted bowl in dyed fleece."],haiku:"loose wool, warm water\nfibres lock and won't let go\nsoft becomes a stone"},
+  {name:"Natural Dyeing",category:"Textile & Fibre",desc:"Colouring fibre with plants, roots, and minerals.",examples:["Skeins dipped in an indigo vat.","Cloth bundled with onion skins, steamed.","A scarf shibori-tied and dyed."],haiku:"green into the vat\nlifts out yellow, meets the air\nand turns the sky blue"},
+  {name:"Macramé",category:"Textile & Fibre",desc:"Knotting cord by hand into patterned textile structures.",examples:["A plant hanger in square knots.","A small woven-knot keychain.","A fringed wall hanging."],haiku:"no needle, no loom\nonly the patience of knots\nholding their own weight"},
+  {name:"Origami",category:"Paper & Book",desc:"Folding a single uncut sheet into form.",examples:["A traditional crane, then a tessellation.","A modular star from six sheets.","A simple jumping frog."],haiku:"one square, no scissors\nevery crease a small promise\nthe flat sheet takes wing"},
+  {name:"Bookbinding",category:"Paper & Book",desc:"Sewing and casing folded pages into a bound book.",examples:["A coptic-stitch sketchbook.","A pamphlet-stitch zine.","A hardcover journal with marbled endpapers."],haiku:"signatures in rows\nthe needle ties page to page\nblank, and ready now"},
+  {name:"Calligraphy",category:"Paper & Book",desc:"The art of beautiful, deliberate letterforms.",examples:["A line of italic in walnut ink.","A name in pointed-pen copperplate.","A short phrase in broad-edge gothic."],haiku:"the pen holds its breath\nthick on the pull, thin on push\nletters learn to dance"},
+  {name:"Hand Lettering",category:"Paper & Book",desc:"Drawing custom letters as artwork rather than handwriting.",examples:["A chalkboard menu with mixed styles.","A single word built as an illustration.","A greeting card cover in brush script."],haiku:"letters drawn, not penned\neach one a small piece of art\nbuilt stroke after stroke"},
+  {name:"Collage",category:"Paper & Book",desc:"Composing images from cut and pasted fragments.",examples:["A dreamlike scene from old magazines.","A torn-paper portrait.","A travel journal page of tickets and maps."],haiku:"the scissors choose well\ntorn worlds glued side by side\nmake a stranger one"},
+  {name:"Papercutting",category:"Paper & Book",desc:"Cutting intricate images and lattice from a single sheet.",examples:["A silhouette of a winter forest.","A lacy paper snowflake.","A cut-paper name banner."],haiku:"the blade walks the line\nwhat falls away makes the scene\nlight comes through the gaps"},
+  {name:"Zine Making",category:"Paper & Book",desc:"Self-published mini-magazines, folded and copied by hand.",examples:["An eight-page zine from one folded sheet.","A photocopied comic.","A pocket field guide to your street."],haiku:"one page, eight small worlds\nfold, cut once, the book appears\nmade to give away"},
+  {name:"Silversmithing",category:"Metal & Jewellery",desc:"Forming and joining sheet and wire into objects.",examples:["A forged spoon with a planished bowl.","A simple hammered cuff.","A small lidded box, soldered."],haiku:"the hammer's bright song\nsilver bends, then holds its shape\nlight pools in the bowl"},
+  {name:"Jewellery Making",category:"Metal & Jewellery",desc:"Crafting small adornments from metal and stone.",examples:["A ring set with a single rough garnet.","A pair of riveted earrings.","A pendant of fused scrap silver."],haiku:"the stone waited long\nnow a band of gold holds it\nclose to a warm pulse"},
+  {name:"Blacksmithing",category:"Metal & Jewellery",desc:"Shaping hot iron and steel at forge and anvil.",examples:["A leaf-tipped fire poker.","A pair of S-hooks for the kitchen.","A simple forged bottle opener."],haiku:"orange in the coals\nthe anvil answers each blow\nsteel remembers heat"},
+  {name:"Enamelling",category:"Metal & Jewellery",desc:"Fusing powdered glass to metal in a kiln for jewel colour.",examples:["A cloisonné pendant in blues.","An enamelled copper dish.","A row of test tiles in one firing."],haiku:"glass dust on copper\nthe kiln fuses it to jewel\ncolour, fixed in fire"},
+  {name:"Glassblowing",category:"Glass",desc:"Gathering molten glass and shaping it with breath.",examples:["A small bubbled tumbler.","A round paperweight with a colour swirl.","A simple bud vase."],haiku:"a breath down the pipe\nfire becomes a small round world\nspun against the dark"},
+  {name:"Stained Glass",category:"Glass",desc:"Joining cut coloured glass with lead or copper foil.",examples:["A geometric window panel.","A small sun-catcher of a leaf.","A lamp shade in the Tiffany manner."],haiku:"light arrives plain-faced\npasses through the cut colours\nleaves the room in song"},
+  {name:"Fused Glass",category:"Glass",desc:"Melting layered glass together flat in a kiln.",examples:["A set of patterned coasters.","A slumped glass bowl.","A pendant of layered colour bars."],haiku:"two sheets become one\nthe kiln erases the seam\ncolour locked in glass"},
+  {name:"Lampworking",category:"Glass",desc:"Shaping glass rods in a torch flame into beads and small forms.",examples:["A handful of swirled glass beads.","A tiny glass fox.","A marble with a twisted core."],haiku:"the flame is the hand\nthe rod softens, turns, and blooms\na bead cools to stone"},
+  {name:"Woodworking",category:"Wood & Leather",desc:"Joining and shaping timber into furniture and objects.",examples:["A dovetailed box with a fitted lid.","A small three-legged stool.","A floating shelf with hidden joinery."],haiku:"two boards, one clean joint\nno glue could hold them tighter\nthan the cut itself"},
+  {name:"Woodturning",category:"Wood & Leather",desc:"Shaping wood on a lathe with chisels as it spins.",examples:["A salad bowl from a single blank.","A set of spinning tops.","A handle for an old chisel."],haiku:"the lathe sings one note\nthe gouge rides the spinning grain\nround out of the square"},
+  {name:"Whittling",category:"Wood & Leather",desc:"Shaping small objects from wood with a single knife.",examples:["A whistle from a willow branch.","A small spoon for a child.","A chain carved from one stick."],haiku:"a knife and a branch\nthe afternoon falls away\nin pale curling strips"},
+  {name:"Leatherwork",category:"Wood & Leather",desc:"Cutting, tooling, and stitching hide into goods.",examples:["A hand-stitched card wallet.","A tooled belt with a name.","A simple key fob."],haiku:"the awl marks the line\nthread crosses itself and pulls\nhide learns to be held"},
+  {name:"Basketry",category:"Wood & Leather",desc:"Weaving baskets and vessels from reed, willow, or grass.",examples:["A round market basket in reed.","A coiled pine-needle bowl.","A small woven berry basket."],haiku:"the reed bends, not breaks\nover, under, round and round\nemptiness, held in"},
+  {name:"Photography",category:"Lens & Time-based",desc:"Drawing with light through a lens onto film or sensor.",examples:["A backlit portrait at the edge of dusk.","A long-exposure river, water gone silk.","A street scene caught mid-step."],haiku:"light falls and is gone\nthe shutter keeps one slim slice\nof a vanished now"},
+  {name:"Film Photography",category:"Lens & Time-based",desc:"Capturing on light-sensitive film, developed by hand.",examples:["A roll of 35mm shot on a grey walk.","A pinhole exposure of a sunlit room.","A contact sheet from one afternoon."],haiku:"thirty-six chances\nthe tank turns in the darkness\nimages surface"},
+  {name:"Animation",category:"Lens & Time-based",desc:"Making still frames move, one drawing at a time.",examples:["A six-second bouncing-ball loop.","A flipbook of a sprouting seed.","A short stop-motion of clay melting."],haiku:"each frame holds a breath\ntwenty-four of them per blink\nand the still thing walks"},
+  {name:"Stop Motion",category:"Lens & Time-based",desc:"Animating physical objects frame by frame.",examples:["A paper cut-out walk cycle.","Beans arranging themselves into a word.","A small clay figure waving."],haiku:"move it, take a frame\nmove it, take a frame again\nstillness learns to walk"},
+  {name:"Filmmaking",category:"Lens & Time-based",desc:"Telling stories in moving image, sound, and edit.",examples:["A one-minute silent short on a walk.","A phone-shot interview, cut tight.","A time-lapse of a day from one window."],haiku:"many frames, one thread\nthe cut decides what is true\ntime bent to a tale"},
+  {name:"Bread Baking",category:"Culinary & Botanical",desc:"Coaxing flour, water, and time into risen loaves.",examples:["A scored sourdough with an open crumb.","A pan of soft milk rolls.","A rustic no-knead boule."],haiku:"flour, water, salt, wait\nthe dough breathes while you are gone\nfire gives it a voice"},
+  {name:"Cake Decorating",category:"Culinary & Botanical",desc:"Finishing cakes with icing, piping, and ornament.",examples:["A buttercream layer cake with rough-iced sides.","Piped rosettes in three tones.","A naked cake with fresh figs."],haiku:"the palette knife sweeps\nsugar smooth as a still pond\nthen one flower piped"},
+  {name:"Chocolate Work",category:"Culinary & Botanical",desc:"Tempering and moulding chocolate into confections.",examples:["A tray of filled bonbons.","A bar studded with toasted nuts.","A simple chocolate bark with sea salt."],haiku:"tempered to a shine\nit snaps clean, then melts to dark\npatience tastes of this"},
+  {name:"Floristry",category:"Culinary & Botanical",desc:"Arranging cut flowers and foliage into compositions.",examples:["A loose seasonal bouquet, spiralled in hand.","A single-stem study in a bud vase.","A wildflower table garland."],haiku:"stems cross in the hand\nthe wild ones lean where they like\norder, but only just"},
+  {name:"Bonsai",category:"Culinary & Botanical",desc:"Cultivating miniature trees through pruning and time.",examples:["A windswept juniper in a shallow pot.","A maple shaped over several years.","A forest planting of small pines."],haiku:"a whole hillside's wind\nbent into one small tree's reach\ngrown by cutting back"},
+  {name:"Pressed Flowers",category:"Culinary & Botanical",desc:"Drying and arranging botanicals flat for art.",examples:["A framed arrangement of pressed pansies.","A bookmark of ferns and grasses.","A card with a single pressed rose."],haiku:"the press holds them still\nspring kept thin between two boards\ncolour, slowly stilled"},
+  {name:"Mosaic",category:"Mosaic & Surface",desc:"Building images from set fragments of tile or glass.",examples:["A doorstep number in cut ceramic.","A birdbath rim in broken china.","A small abstract panel in glass tile."],haiku:"broken on purpose\neach small piece finds its grout-bed\nfar off, it is whole"},
+  {name:"Pyrography",category:"Mosaic & Surface",desc:"Burning images and pattern into wood or leather.",examples:["A wooden coaster with a fern motif.","A map burned onto a cutting board.","A leather tag with initials."],haiku:"the hot tip lingers\nsmoke writes a thin brown record\nthe wood keeps the burn"},
+  {name:"Resin Art",category:"Mosaic & Surface",desc:"Pouring clear resin to set colour, objects, or shine.",examples:["A coaster with embedded dried flowers.","A wave-pattern serving tray.","A pendant holding a tiny shell."],haiku:"liquid glass, poured slow\nit traps the flower mid-fall\nand sets it as time"},
+  {name:"Tile Painting",category:"Mosaic & Surface",desc:"Hand-painting glazed designs onto ceramic tiles.",examples:["A blue-and-white delft-style scene.","A set of patterned house-number tiles.","A single lemon on a square tile."],haiku:"the brush meets the glaze\ncolour sinks, then fire seals it\nthe wall wears a song"},
+  {name:"Digital Painting",category:"Digital & New Media",desc:"Painting on a tablet or screen with brushes and layers.",examples:["A character portrait in soft cel-shading.","A moody landscape with custom brushes.","A study repainting a photo from life."],haiku:"no drying, no mess\nthe layer holds every change\nundo is a gift"},
+  {name:"Pixel Art",category:"Digital & New Media",desc:"Building images one square at a time on a tight grid.",examples:["A 16x16 game item icon.","A small animated walk cycle.","A tiny isometric room."],haiku:"one square, then the next\na world built from small bright tiles\nmemory of games"},
+  {name:"Vector Illustration",category:"Digital & New Media",desc:"Drawing with scalable points and paths, crisp at any size.",examples:["A flat-style logo mark.","A set of matching line icons.","A bold poster of clean shapes."],haiku:"points and pulling curves\nthe line stays sharp at all sizes\nmath wearing colour"},
+  {name:"Generative Art",category:"Digital & New Media",desc:"Making images with code, rules, and controlled chance.",examples:["A field of flow-line curves.","A grid that mutates by random seed.","A circle packing in soft colour."],haiku:"you write the small rules\nthen let the machine surprise\nchance inside the lines"},
+  {name:"3D Modelling",category:"Digital & New Media",desc:"Sculpting and building objects in 3D software.",examples:["A low-poly desk lamp.","A sculpted clay-style bust.","A small game-ready prop."],haiku:"from a single cube\nyou push and pull out a world\nlit from every side"},
+  {name:"Game Design",category:"Digital & New Media",desc:"Designing the rules, feel, and loops of play.",examples:["A one-page rules sketch for a card game.","A tiny browser game in an evening.","A paper prototype of a board game."],haiku:"a rule, then a choice\nthe player writes the story\nyou only set stage"},
+  {name:"Songwriting",category:"Sound & Performance",desc:"Shaping melody, chord, and lyric into a song.",examples:["A verse-chorus song on three chords.","A melody hummed into your phone first.","A reworked lyric to an old tune of yours."],haiku:"three chords and the truth\nthe melody finds the words\nor the words, the tune"},
+  {name:"Music Production",category:"Sound & Performance",desc:"Arranging and mixing sound into finished tracks.",examples:["A looped beat from one sample.","A short ambient pad piece.","A remix of your own voice memo."],haiku:"layer onto layer\nsilence shaped into a pulse\nthe mix breathes as one"},
+  {name:"Field Recording",category:"Sound & Performance",desc:"Capturing the sounds of a place as material or art.",examples:["A dawn chorus recorded at a window.","The hum of one café, ten minutes.","Rain on three different surfaces."],haiku:"the world is playing\nyou only press record\nand learn how to hear"},
+  {name:"Poetry",category:"Sound & Performance",desc:"Compressing feeling and image into deliberate lines.",examples:["A short poem built from one overheard line.","A list-poem of small joys.","A six-word story."],haiku:"small words, heavy freight\nthe line breaks where breath would break\nwhite space does the rest"},
+  {name:"Storytelling",category:"Sound & Performance",desc:"Telling tales aloud or on the page, shaped for an ear.",examples:["A two-minute true story, told aloud.","A fairy tale reset in your town.","A myth retold from the villain's side."],haiku:"once, there was a voice\nit leaned in, said listen close\nand the room held still"},
+  {name:"Dance / Movement",category:"Sound & Performance",desc:"Composing and improvising with the moving body.",examples:["A thirty-second phrase to one song.","A movement study of a single word.","A mirrored improvisation with a friend."],haiku:"the body, the brush\nthe floor keeps no record but\nthe muscle remembers"},
+  {name:"Land Art",category:"Found & Ephemeral",desc:"Arranging natural materials in place, left to change.",examples:["A spiral of stones on a beach.","A line of leaves sorted by colour.","A cairn balanced at a river's edge."],haiku:"stones in a slow spiral\nthe tide will take it by dusk\nthat is the whole point"},
+  {name:"Street Art / Chalk",category:"Found & Ephemeral",desc:"Temporary public marks in chalk, tape, or paste.",examples:["A pavement chalk mural.","A tape drawing on a blank wall.","A stencil of a small bird."],haiku:"chalk on the grey stone\nthe first rain will rinse it clean\nso make it today"},
+  {name:"Junk Modelling",category:"Found & Ephemeral",desc:"Building from packaging, cardboard, and household waste.",examples:["A cardboard city for an afternoon.","A robot from a cereal box.","A marble run taped to a wall."],haiku:"the recycling bin\nholds a castle, a beast, a ship\nseen by the right eye"},
+  {name:"Sand / Snow Sculpture",category:"Found & Ephemeral",desc:"Shaping form from sand or snow, made to vanish.",examples:["A sandcastle with a real moat.","A snow fox by the front step.","A relief carved into a drift."],haiku:"you build it to melt\nevery wave, every warm hour\nis part of the work"},
+  {name:"Candle Making",category:"Home & Practical",desc:"Pouring wax and wick into scented or shaped candles.",examples:["A pair of poured soy jar candles.","A marbled pillar candle.","A beeswax taper rolled by hand."],haiku:"wax warms and goes clear\nthe wick waits at the centre\nlight, stored for later"},
+  {name:"Soap Making",category:"Home & Practical",desc:"Blending oils and lye into bars, or melt-and-pour.",examples:["A batch of oat-and-honey bars.","A layered melt-and-pour soap.","A cold-process loaf, cut and cured."],haiku:"oil meets its opposite\nthe pour thickens to a trace\ncut, and wait four weeks"},
+  {name:"Upholstery",category:"Home & Practical",desc:"Re-covering and restoring padded furniture.",examples:["A drop-in seat pad re-covered.","A footstool in new fabric.","A simple cushion, piped and sewn."],haiku:"strip back to the frame\nbones were always good underneath\ndress them once again"},
+  {name:"Furniture Restoration",category:"Home & Practical",desc:"Bringing old wood and finishes back to life.",examples:["A chair stripped and re-oiled.","A drawer that finally slides.","A tabletop sanded and waxed."],haiku:"under grime and years\nthe grain was waiting all along\npatient as the wood"},
+  {name:"Gardening / Growing",category:"Home & Practical",desc:"Designing and tending a plot, pot, or windowsill.",examples:["A windowsill of three herbs.","A small raised bed plan.","A jar of sprouting seeds."],haiku:"you bury small hope\nand do the watering on faith\ngreen answers in weeks"},
+  {name:"Short Fiction",category:"Creative Writing",desc:"Telling a complete story in a small number of pages.",examples:["A story that turns on a single overheard line.","A scene where nobody says what they mean.","A 500-word story with a sudden ending."],haiku:"one room, one true want\nthe smallest scene holds a life\nend before they're ready"},
+  {name:"Flash Fiction",category:"Creative Writing",desc:"A whole story in under a thousand words — often far fewer.",examples:["A 100-word story with a full arc.","A breakup told in a grocery list.","A drabble of exactly fifty words."],haiku:"a story, palm-sized\nno room for a single waste\nthe last line is the door"},
+  {name:"Microfiction",category:"Creative Writing",desc:"Stories shrunk to a sentence or two — the six-word kind.",examples:["A six-word story with a twist.","A one-sentence horror.","A story told in a single text message."],haiku:"six words, a whole world\nwhat's left out does all the work\nthe reader fills in"},
+  {name:"Novel / Novella",category:"Creative Writing",desc:"Sustained long-form fiction across many chapters.",examples:["A first chapter that opens mid-argument.","A chapter outline of one character's week.","A scene introducing your antagonist."],haiku:"a world to live in\nbuilt one slow chapter at a time\npatience is the plot"},
+  {name:"Poetry (Free Verse)",category:"Creative Writing",desc:"Poems unbound by fixed meter or rhyme.",examples:["A poem made only of questions.","A poem about an ordinary object.","A poem that repeats one line, changed each time."],haiku:"no metronome here\nthe line breaks where the breath breaks\nmeaning leans on white"},
+  {name:"Formal Poetry",category:"Creative Writing",desc:"Poems built to a fixed shape: sonnet, villanelle, haiku.",examples:["A sonnet about a delayed train.","A villanelle with one stubborn refrain.","A haiku for each season."],haiku:"the form is a cage\nthe bird sings sweeter inside\nrules become the song"},
+  {name:"Screenwriting",category:"Creative Writing",desc:"Writing for screen in scenes, action, and dialogue.",examples:["A one-page scene, two people, one secret.","A cold open with no dialogue.","A logline for a film you'd watch."],haiku:"white space and crisp verbs\nthe camera is never named\nyet you see it all"},
+  {name:"Playwriting",category:"Creative Writing",desc:"Writing for the stage — voices in a bare-bones space.",examples:["A two-character scene over one prop.","A monologue addressed to an empty chair.","A scene set in real time, no cuts."],haiku:"a bare stage, two chairs\nthe whole world made out of talk\nlights up, then they speak"},
+  {name:"Essay / Memoir",category:"Creative Writing",desc:"Shaping true experience and thought into prose.",examples:["A short essay built around one photograph.","A memory you've never written down.","An essay that argues with itself."],haiku:"the truth, slant and shaped\nwhat happened, and what it meant\nfound in the retelling"},
+  {name:"Worldbuilding",category:"Creative Writing",desc:"Inventing the maps, rules, and histories of a place.",examples:["A map of a city that floats.","Three rules for how magic costs something.","A holiday no real culture has."],haiku:"before any plot\nyou draw the coast and the laws\nthen let people in"},
+  {name:"Journaling",category:"Creative Writing",desc:"Writing for yourself — to notice, process, or remember.",examples:["Three pages, unedited, first thing.","A page written as a letter to next year.","One small thing noticed each hour."],haiku:"no reader to please\nthe page keeps what the day held\nhonest, and yours alone"},
+  {name:"Comics / Graphic Novel",category:"Comics & Sequential",desc:"Telling stories in panels, gutters, and word balloons.",examples:["A wordless three-panel gag.","A single page with no straight panels.","A page where the gutter holds the twist."],haiku:"panels, then the gap\nthe story lives in between\nwhat the reader leaps"},
+  {name:"Webcomic",category:"Comics & Sequential",desc:"Short serial comics made for the scroll.",examples:["A four-panel strip with a recurring joke.","A vertical-scroll reveal.","A character who breaks the frame."],haiku:"made for the small screen\nthe punchline waits one scroll down\nthumb turns every page"},
+  {name:"Storyboarding",category:"Comics & Sequential",desc:"Planning a film or animation shot by shot.",examples:["A six-frame chase, no dialogue.","A boarded establishing shot.","A reaction beat in three frames."],haiku:"the film before film\nrough boxes hold the whole shape\ntiming drawn in pen"},
+  {name:"Concept Art",category:"Comics & Sequential",desc:"Designing the look of characters, worlds, and props.",examples:["A creature built from two real animals.","Three silhouettes for one hero.","A prop with a clear backstory in its wear."],haiku:"before the world's built\nyou draw what it might become\nmood, then the details"},
+  {name:"Costume / Cosplay",category:"Body & Costume",desc:"Building wearable character through fabric and craft.",examples:["A cape with a hidden fastening.","A prop sword from foam.","A headpiece from a single material."],haiku:"the character worn\nstitched, foamed, and painted to life\nyou become the page"},
+  {name:"Sewing / Garment Making",category:"Body & Costume",desc:"Drafting and stitching clothing from pattern to seam.",examples:["A simple elastic-waist skirt.","A tote bag with a lining.","A shirt with a mended, visible patch."],haiku:"flat cloth, then a body\nthe pattern remembers shape\nseam by seam, a fit"},
+  {name:"Makeup Artistry",category:"Body & Costume",desc:"Painting the face — beauty, editorial, or special effects.",examples:["A graphic liner look in one colour.","A simple old-age makeup.","A fantasy look in metallics."],haiku:"the face, a canvas\ncolour shapes a second self\nwashed off by midnight"},
+  {name:"Face / Body Painting",category:"Body & Costume",desc:"Painting skin directly with bold pattern and colour.",examples:["A butterfly across the eyes.","A galaxy on one arm.","A festival pattern in two colours."],haiku:"skin becomes the page\nthe brush follows where you breathe\ngone with the first wash"},
+  {name:"Hair Styling",category:"Body & Costume",desc:"Shaping hair as sculpture, braid, and form.",examples:["A four-strand braid.","An updo held by one pin.","A bold colour placement, clip-in."],haiku:"soft and yet sculpted\nthe braid holds an hour's patience\nundone by the wind"},
+  {name:"Tabletop Game Design",category:"Toy & Tabletop",desc:"Inventing board, card, and dice games and their rules.",examples:["A push-your-luck game with a coin.","A card game in one suit.","A tile-laying game on a napkin."],haiku:"a box of small rules\nthe table becomes a world\nchoices, dressed as play"},
+  {name:"Dollhouse / Miniatures",category:"Toy & Tabletop",desc:"Building tiny rooms, scenes, and scale models.",examples:["A 1:12 reading nook.","A miniature market stall.","A shoebox diorama of one memory."],haiku:"a whole room, palm-sized\neach small thing made twice as small\nthe big world, gentled"},
+  {name:"Puppet Making",category:"Toy & Tabletop",desc:"Building puppets — sock, rod, shadow, or marionette.",examples:["A sock puppet with real character.","A shadow puppet for one scene.","A rod puppet that can wave."],haiku:"cloth, a hand, a voice\nthe lifeless thing leans and speaks\nyou are the heartbeat"},
+  {name:"Toy Making",category:"Toy & Tabletop",desc:"Crafting playthings from wood, cloth, or salvage.",examples:["A wooden push-along animal.","A rag doll with a stitched smile.","A balancing toy from offcuts."],haiku:"made to be held tight\ndropped, mended, loved past its prime\nthe best kind of work"},
+  {name:"Pastry / Baking",category:"Culinary Arts",desc:"The precise craft of doughs, laminations, and sweets.",examples:["A batch of rough-puff palmiers.","A fruit galette, freeform.","A tray of brown-butter cookies."],haiku:"butter, flour, cold hands\nthe oven keeps the secret\nuntil the first rise"},
+  {name:"Cocktail / Mixology",category:"Culinary Arts",desc:"Balancing spirit, sour, sweet, and bitter into drinks.",examples:["A two-ingredient highball, dialed in.","A sour built around one fruit.","A zero-proof drink with real depth."],haiku:"sharp, sweet, strong, and weak\nfour corners held in one glass\nbalance on the tongue"},
+  {name:"Plating / Food Styling",category:"Culinary Arts",desc:"Composing the look of a finished plate.",examples:["A plate built on one diagonal.","Three textures, one colour.","A dessert plated with negative space."],haiku:"the plate is a frame\nempty space does half the work\nyou eat with the eyes"},
+  {name:"Fermentation",category:"Culinary Arts",desc:"Coaxing flavour from time, salt, and microbes.",examples:["A small jar of quick kimchi.","A loaf from a week-old starter.","A bottle of two-day water kefir."],haiku:"salt, time, and patience\nthe jar bubbles on its own\nyou only stand back"},
+  {name:"Coffee / Tea Craft",category:"Culinary Arts",desc:"Dialing in brews, ratios, and the small ritual.",examples:["A pour-over dialed to one bean.","A side-by-side of two ratios.","A matcha whisked to a fine foam."],haiku:"water, heat, and grind\nthe same bean, a hundred cups\npatience in the pour"},
+  {name:"Acting",category:"Stage & Screen",desc:"Becoming a character through voice, body, and intention.",examples:["A monologue performed three different ways.","A scene played silently, then with words.","A character built from one strong want."],haiku:"you borrow a life\nfor the length of a few lines\nthen hand it all back"},
+  {name:"Improv",category:"Stage & Screen",desc:"Making scenes and stories on the spot, saying yes.",examples:["A two-line scene from a random object.","A 'yes, and' chain with a friend.","A scene where you justify a weird first line."],haiku:"no script, no safety\nyou say yes to what arrives\nthe scene builds itself"},
+  {name:"Stand-up / Comedy Writing",category:"Stage & Screen",desc:"Shaping observation and timing into laughter.",examples:["A bit built from one small annoyance.","A joke rewritten for a tighter punchline.","A two-minute set on being late."],haiku:"the setup leans in\nthe room holds one shared small breath\nthen the turn lands it"},
+  {name:"Voice Acting",category:"Stage & Screen",desc:"Performing character and emotion through the voice alone.",examples:["Three voices for one short line.","A narration read warm, then cold.","A creature voice from a normal word."],haiku:"the face goes unseen\nyet a whole person arrives\ncarried on the breath"},
+  {name:"Mime / Physical Theatre",category:"Stage & Screen",desc:"Telling story through the body with no words.",examples:["An invisible wall, made real.","Lifting a heavy box that isn't there.","A whole errand, performed silently."],haiku:"no word, no object\nthe body insists they're there\nand we believe it"},
+  {name:"Puppetry Performance",category:"Stage & Screen",desc:"Giving life and voice to a puppet before an audience.",examples:["A puppet that listens before it speaks.","A hand becoming a small creature.","A two-puppet argument, solo."],haiku:"wood, cloth, and your hand\nthe audience meets its eyes\nand forgets your arm"},
+  {name:"Magic / Illusion",category:"Stage & Screen",desc:"Designing and performing tricks of attention and wonder.",examples:["A coin vanish in your own hands.","A card revealed an impossible way.","A trick built around misdirection only."],haiku:"the hand shows you truth\nwhile the other writes the lie\nwonder fills the gap"},
+  {name:"Circus / Juggling",category:"Stage & Screen",desc:"Skill arts of balance, throw, and daring.",examples:["A clean three-ball cascade.","A simple balance on one object.","A short routine to one song."],haiku:"three things in the air\nonly one ever in hand\nthe rest, pure faith, falling"},
+  {name:"Claymation",category:"Animation",desc:"Stop-motion animation with clay or plasticine figures.",examples:["A clay blob morphing into a face.","A figure taking three slow steps.","A short scene of clay eating clay."],haiku:"press, shoot, press again\nthe clay learns to move alone\nfingerprints and all"},
+  {name:"Flipbook Animation",category:"Animation",desc:"Hand-drawn motion flicked through page corners.",examples:["A stick figure backflip in 12 pages.","A flower blooming corner to corner.","A bouncing ball across a sticky-note pad."],haiku:"corner of the page\na thumb makes the drawing run\nmotion out of stills"},
+  {name:"2D Hand-drawn Animation",category:"Animation",desc:"Drawing motion frame by frame, the classic way.",examples:["A looping waving hand.","A candle flame that flickers true.","A walk cycle, eight drawings."],haiku:"draw it, then again\neach sheet a sliver of time\nlet it breathe and move"},
+  {name:"Motion Graphics",category:"Animation",desc:"Animating type, shape, and graphic design over time.",examples:["A logo that assembles itself.","A kinetic-type quote, one line.","A loading spinner with personality."],haiku:"letters learn to move\nthe shape arrives, then explains\ndesign, set in time"},
+  {name:"Cutout / Paper Animation",category:"Animation",desc:"Animating jointed paper or cardboard characters.",examples:["A paper puppet that waves.","A scrolling paper landscape.","A collage character blinking."],haiku:"hinged at the elbows\nthe flat thing stands up and walks\npaper, given breath"},
+  {name:"Sand / Light Animation",category:"Animation",desc:"Animating with sand on glass or shifting light.",examples:["Sand becoming a face on a lightbox.","A scene that dissolves into another.","A story told in one continuous wipe."],haiku:"the lightbox glows white\nsand becomes a bird, a wave\nswept into the next"},
+  {name:"Documentary",category:"Film & Video",desc:"Capturing real people, places, and truth on film.",examples:["A three-shot portrait of a neighbour.","A day in one small shop.","An interview cut to its honest core."],haiku:"you point at the real\nand choose where to start and stop\ntruth, framed by a choice"},
+  {name:"Music Video",category:"Film & Video",desc:"Making image and edit move with a song.",examples:["A one-take video to a chorus.","A video built only from reflections.","A song visualised in one location."],haiku:"the song is the clock\nevery cut lands on a beat\nsound, made visible"},
+  {name:"Video Editing",category:"Film & Video",desc:"Shaping raw footage into rhythm and meaning.",examples:["A montage that builds to one image.","The same scene cut tense, then calm.","A jump-cut routine of a morning."],haiku:"the cut is the art\nwhat you leave out shapes the truth\ntime, bent in the edit"},
+  {name:"Vlogging / Video Essay",category:"Film & Video",desc:"Talking through an idea or a day on camera.",examples:["A three-minute essay on one object.","A day filmed in ten short clips.","An argument made with examples."],haiku:"you, a lens, a thought\nthe idea unspools in cuts\nspeaking to no-one, all"},
+  {name:"VFX / Compositing",category:"Film & Video",desc:"Blending shot footage with created elements.",examples:["A simple green-screen swap.","An object that floats, rotoscoped.","Rain added to a dry shot."],haiku:"two worlds, one clean seam\nwhat was filmed meets what was made\nthe join, invisible"},
+  {name:"Instrument Playing",category:"Sound & Music",desc:"Making music by hand on a chosen instrument.",examples:["A loop improvised over four chords.","A melody learned by ear.","A rhythm tapped out on anything."],haiku:"wood, string, breath, and time\nthe same note, never the same\npractice into song"},
+  {name:"Beatboxing",category:"Sound & Music",desc:"Building rhythm and sound with the mouth alone.",examples:["A basic kick-hat-snare pattern.","A bassline hummed and punched.","A 15-second loop, one breath."],haiku:"drum kit in the mouth\nlips, tongue, and a held-back breath\nthe beat needs no sticks"},
+  {name:"DJing / Turntablism",category:"Sound & Music",desc:"Blending and reshaping recorded music live.",examples:["A clean blend between two songs.","A loop stretched into something new.","A set built around one mood."],haiku:"two records, one pulse\nthe crossfade finds the seam\nthe floor never stops"},
+  {name:"Sound Design",category:"Sound & Music",desc:"Inventing the sounds a world or scene needs.",examples:["A footstep made from celery.","The sound of a door to nowhere.","A UI click that feels satisfying."],haiku:"the world has no sound\nuntil you build it from scraps\ncelery as bone"},
+  {name:"Model Building",category:"Craft & Making",desc:"Assembling and detailing scale kits and models.",examples:["A kit weathered to look used.","A scratch-built tiny shelf.","A painted figure under 50mm."],haiku:"small parts, steady hands\nthe glue holds a tiny world\npatience, dried in place"},
+  {name:"Diorama",category:"Craft & Making",desc:"Building a frozen scene in miniature.",examples:["A rainy street corner in a jar.","A tiny campsite at night.","A single dramatic moment, scaled down."],haiku:"one moment, made small\nlight and dust arranged just so\ntime held in a box"},
+  {name:"Kite / Paper Engineering",category:"Craft & Making",desc:"Designing things that fly, fold, or pop up.",examples:["A simple diamond kite that flies.","A pop-up card that surprises.","A paper mechanism with one moving part."],haiku:"paper wants to fly\ngive it a spine and a tail\nthe wind does the rest"},
+  {name:"Knot / Cord Craft",category:"Craft & Making",desc:"Tying decorative and useful knots and lashings.",examples:["A Turk's head bracelet.","A keychain in one cord.","A lashed frame from sticks and twine."],haiku:"a single long cord\nover, under, drawn up tight\nholds without a nail"},
+  {name:"Woodburning Maps / Signs",category:"Craft & Making",desc:"Designing lettered and illustrated burned pieces.",examples:["A small 'welcome' sign.","A burned trail map of a walk.","A coaster with one bold initial."],haiku:"the tip writes in smoke\nletters scorched, then brushed, then oiled\nthe board keeps your hand"},
+  {name:"Graphic Design",category:"Design & Spatial",desc:"Arranging type, image, and space to communicate.",examples:["A poster with one word and one image.","A book cover for an imagined novel.","A logo in a single weight of type."],haiku:"type, space, and one image\nthe eye is led where you choose\nsilence between marks"},
+  {name:"Interior / Set Design",category:"Design & Spatial",desc:"Composing a room or stage as mood and story.",examples:["A mood board for one tiny room.","A stage set built from three objects.","A corner restyled with what you own."],haiku:"a room tells a tale\nin what it keeps and leaves out\nyou write it in things"},
+  {name:"Architecture / Model Homes",category:"Design & Spatial",desc:"Imagining and drawing buildings and spaces.",examples:["A floor plan for a house on a cliff.","A tiny chipboard model.","A doorway designed to feel like welcome."],haiku:"you draw how to live\nwalls deciding where light falls\nspace, shaped into home"},
+  {name:"Floral Design",category:"Design & Spatial",desc:"Composing flowers as structure, line, and colour.",examples:["A tight monochrome posy.","An ikebana-style three-stem study.","An arch of foliage over a doorway."],haiku:"stem, line, and balance\nthe empty space is the point\nbloom against the air"},
+  {name:"Fashion Design",category:"Design & Spatial",desc:"Imagining and sketching garments and collections.",examples:["A croquis of one bold silhouette.","A capsule of three matching looks.","A garment built from one rectangle."],haiku:"the body, the canvas\ncloth imagined into shape\nworn out into the world"},
+  {name:"Puzzle / Riddle Design",category:"Mind & Play",desc:"Inventing puzzles, riddles, and brain-teasers.",examples:["A riddle whose answer is 'shadow'.","A maze with one false exit.","A word puzzle hidden in a sentence."],haiku:"the answer hides plain\nwrapped in a sentence's folds\njoy in the unlock"},
+  {name:"Origami Design",category:"Mind & Play",desc:"Inventing new folds and forms from paper.",examples:["A new simple animal fold.","A modular unit that tiles.","An action model that flaps."],haiku:"one square, endless forms\nthe crease pattern is the plan\nmath you fold by hand"},
+  {name:"Calligraphic Lettering Art",category:"Mind & Play",desc:"Designing words as ornament and image.",examples:["A name drawn as a creature.","A quote in a flowing banner.","A single letter as a whole artwork."],haiku:"the word becomes shape\nmeaning and beauty entwined\nink learns how to sing"},
+  {name:"Tattoo / Flash Design",category:"Mind & Play",desc:"Designing bold, lasting images meant for skin.",examples:["A flash sheet of small symbols.","A design that wraps a wrist.","A bold-line creature, no shading."],haiku:"drawn to last a life\nbold enough to read in years\nink with no eraser"},
+  {name:"Pointillism",category:"Techniques & Methods",desc:"Building an image from countless small dots of pure colour.",examples:["A small scene built entirely from dots.","A gradient made only of stippled points.","A portrait where colour mixes in the eye, not the palette."],haiku:"ten thousand small dots\nno line, no stroke, only points\nthe eye blends them whole"},
+  {name:"Sfumato",category:"Techniques & Methods",desc:"Blending tones so softly that edges dissolve into smoke.",examples:["A face with no hard outlines.","A study of light fading into shadow.","Soft transitions with no visible strokes."],haiku:"smoke instead of line\nthe edge melts into the air\nshadow without seam"},
+  {name:"Impasto",category:"Techniques & Methods",desc:"Laying paint thick so the strokes stand off the surface.",examples:["A sky built from thick palette-knife ridges.","A single flower in heavy raised paint.","A study where the texture catches real light."],haiku:"paint stacked into ridge\nthe brushmark casts its own shade\nsurface you could touch"},
+  {name:"Chiaroscuro",category:"Techniques & Methods",desc:"Strong contrast of light and dark to model dramatic form.",examples:["A single object lit by one candle.","A portrait half in deep shadow.","A still life with a hard light source."],haiku:"one light in the dark\nform carved by the fall of shade\ndrama in the gap"},
+  {name:"Gesture Drawing",category:"Techniques & Methods",desc:"Fast, loose drawing that captures motion and energy.",examples:["Thirty-second poses, ten in a row.","A figure caught mid-movement.","A page of quick animal scribbles."],haiku:"the hand moves too fast\nfor the mind to second-guess\nlife, before the line"},
+  {name:"Cross-Hatching",category:"Techniques & Methods",desc:"Building tone and shadow with layered crossing lines.",examples:["A sphere shaded only in crossed lines.","A dark corner built layer by layer.","A portrait where line density is the tone."],haiku:"lines over lines lean\nthe more they cross, the darker\nlight is where they thin"},
+  {name:"Stippling",category:"Techniques & Methods",desc:"Rendering tone with patterns of tiny dots.",examples:["A shell rendered entirely in dots.","A shadow built from dense stippling.","An ink drawing with no lines at all."],haiku:"patience, dot by dot\ndarkness is just more of them\nlight, the space between"},
+  {name:"Negative Space Drawing",category:"Techniques & Methods",desc:"Drawing the gaps around a subject instead of the subject.",examples:["A chair drawn only by its surrounding space.","Leaves defined by the sky between them.","A still life rendered as its shadows."],haiku:"draw what is not there\nthe shape appears on its own\nheld up by the gap"},
+  {name:"Wet-on-Wet",category:"Techniques & Methods",desc:"Working fresh medium into still-wet medium for soft blends.",examples:["A sky bleeding cloud into blue.","Two colours melting at their meeting.","A loose landscape done before it dries."],haiku:"wet meets wet and runs\nthe colours decide themselves\nyou only guide flow"},
+  {name:"Glazing (Painting)",category:"Techniques & Methods",desc:"Layering thin transparent washes to build luminous depth.",examples:["A shadow deepened by five thin layers.","A glow built only from transparent passes.","A fruit that seems lit from within."],haiku:"thin veil over veil\nlight sinks down through every glaze\nand climbs back as glow"},
+  {name:"Contour / Continuous Line",category:"Techniques & Methods",desc:"Drawing a subject in one unbroken line, eyes on the subject.",examples:["A face in a single unbroken line.","A hand drawn without looking down.","A still life in one continuous stroke."],haiku:"one line, never lift\neyes on the thing, not the page\ntrust where the hand goes"},
+  {name:"Scumbling",category:"Techniques & Methods",desc:"Dragging broken, opaque colour lightly over a dry layer.",examples:["A misty effect dragged over dark.","A weathered texture on an old wall.","A soft haze broken over colour beneath."],haiku:"dry brush, broken drag\ncolour caught on the high tooth\nthe layer shows through"},
+  {name:"Foreshortening",category:"Techniques & Methods",desc:"Drawing forms receding sharply toward the viewer.",examples:["A hand reaching straight at the viewer.","A figure lying feet-first toward you.","A road rushing into the distance."],haiku:"the arm points at you\nand shrinks against all logic\ndepth folded to flat"},
+  {name:"Color Theory in Practice",category:"Techniques & Methods",desc:"Using complements, harmony, and temperature on purpose.",examples:["A piece built on one complementary pair.","A warm subject on a cool ground.","A limited palette of three mixed colours."],haiku:"warm pulls, cool recedes\ntwo opposites set each other\nblazing side by side"},
+  {name:"Succulents / Terrariums",category:"Culinary & Botanical",desc:"Composing tiny living landscapes in glass or shallow dishes.",examples:["A closed glass terrarium with moss.","A shallow dish of mixed succulents.","A hanging jar garden by a window."],haiku:"a world under glass\nslow green things keep their own time\nrain when you remember"}
+];
+
+const grid=document.getElementById('grid');
+const controls=document.getElementById('controls');
+const countEl=document.getElementById('count');
+let activeCat='All';
+const categories=['All',...Array.from(new Set(ENTRIES.map(e=>e.category)))];
+
+/* a colour per category — adds visual rhythm to the long list */
+const CAT_COLOR={
+  "Drawing & Painting":"#d9764a","Printmaking":"#e0b15e","Sculpture & 3D":"#c98a6b",
+  "Ceramics":"#bd6f5a","Textile & Fibre":"#8fb09a","Paper & Book":"#cdb892",
+  "Metal & Jewellery":"#d6a05e","Glass":"#7fa6b8","Wood & Leather":"#b5895c",
+  "Lens & Time-based":"#9d8fc0","Culinary & Botanical":"#a8b06a","Mosaic & Surface":"#cf8f7a",
+  "Digital & New Media":"#6fb0c4","Sound & Performance":"#c77fa6","Found & Ephemeral":"#9bb87f",
+  "Home & Practical":"#cba24f",
+  "Creative Writing":"#b88fd0","Comics & Sequential":"#e09a5e","Body & Costume":"#d27f9a",
+  "Toy & Tabletop":"#7bb8a0","Culinary Arts":"#cf9a55",
+  "Stage & Screen":"#e08a6f","Animation":"#7f9ad0","Film & Video":"#8aa0b8",
+  "Sound & Music":"#c98fb0","Craft & Making":"#b59a5c","Design & Spatial":"#69b0a4",
+  "Mind & Play":"#cf8a6a","Techniques & Methods":"#9988c8"
+};
+const catColor=c=>CAT_COLOR[c]||"#d9764a";
+
+// size tiers (rem) and a helper to shuffle
+const SIZE_TIERS=[1.0,1.15,1.3,1.5,1.7,1.95];
+function shuffle(a){const r=a.slice();for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+
+function scatterCategories(){
+  // keep the label, clear chips
+  controls.querySelectorAll('.chip').forEach(c=>c.remove());
+  // 'All' stays first and prominent; the rest scatter
+  const rest=shuffle(categories.filter(c=>c!=='All'));
+  const ordered=['All',...rest];
+  ordered.forEach(cat=>{
+    const b=document.createElement('button');
+    b.className='chip';b.setAttribute('aria-pressed',cat===activeCat);
+    if(cat!=='All'){
+      b.style.setProperty('--cc',catColor(cat));
+      b.innerHTML=`<span class="dot"></span>${cat}`;
+    } else { b.textContent=cat; }
+    b.dataset.cat=cat;
+    // random size + slight rotation/vertical jitter for an organic cluster
+    const size = cat==='All' ? 1.5 : SIZE_TIERS[Math.floor(Math.random()*SIZE_TIERS.length)];
+    const rot = (Math.random()*7-3.5).toFixed(2);
+    const dy = (Math.random()*10-5).toFixed(1);
+    b.style.fontSize=`${size}rem`;
+    b.style.setProperty('--rot',`${rot}deg`);
+    b.style.setProperty('--dy',`${dy}px`);
+    b.addEventListener('click',()=>{activeCat=cat;syncChips();render();});
+    controls.appendChild(b);
+  });
+}
+scatterCategories();
+document.getElementById('reshuffle').addEventListener('click',scatterCategories);
+function syncChips(){controls.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.cat===activeCat));}
+
+function render(){
+  const list=activeCat==='All'?ENTRIES:ENTRIES.filter(e=>e.category===activeCat);
+  grid.innerHTML='';
+  countEl.textContent=`${String(list.length).padStart(2,'0')} ENTR${list.length===1?'Y':'IES'} · ${categories.length-1} CATEGORIES`;
+  list.forEach(e=>{
+    const idxNum=ENTRIES.indexOf(e)+1;
+    const cc=catColor(e.category);
+    const q=encodeURIComponent(e.name+" tutorial for beginners");
+    const ytURL=`https://www.youtube.com/results?search_query=${q}`;
+    const el=document.createElement('div');
+    el.className='entry';
+    el.style.setProperty('--cc',cc);
+    el.innerHTML=`
+      <div class="entry-body">
+        <span class="idx">No. ${String(idxNum).padStart(2,'0')}</span>
+        <span class="name">${e.name}</span>
+        <span class="cat">${e.category}</span>
+        <span class="desc">${e.desc}</span>
+        <span class="ex"><b>Try</b> ${e.examples.map(x=>`<span class="exi">${x}</span>`).join("")}</span>
+      </div>
+      <a class="tut" href="${ytURL}" target="_blank" rel="noopener">Find tutorials ↗</a>`;
+    grid.appendChild(el);
+  });
+}
+render();
+
+/* ---------------- topic banks + prompt mixer ---------------- */
+const TOPICS = {
+  subject:["a lighthouse","an old fox","a teapot","your grandmother's hands","a city at flood","a sleeping whale",
+    "the last tree","a paper boat","a market stall","a broken clock","a flock of starlings","a lone astronaut",
+    "a bowl of lemons","a rainstorm","a fairground at dawn","a stray cat","a mountain pass","a jar of fireflies",
+    "a derelict greenhouse","a violin","a pair of worn boots","the moon over rooftops","a field of sunflowers",
+    "a deep-sea creature","a train platform","a cup of spilled tea","an open window","a folded map"],
+  setting:["underwater","at the edge of a desert","in a snowstorm","at golden hour","inside a cathedral",
+    "on the ocean floor","in a crowded café","under neon light","in deep forest","at the bottom of a well",
+    "on a rooftop at night","in a hall of mirrors","during an eclipse","in an abandoned station","amid autumn leaves",
+    "in zero gravity","behind glass","in the fog","beneath a full moon","at the turning of the tide",
+    "in a thunderstorm","at the bottom of a swimming pool","in a sunlit attic","on the last train home",
+    "inside a snow globe","at a roadside diner at 3am","in a field after rain","under a circus tent",
+    "on the surface of the moon","in a flooded subway","at the edge of a cliff","in a greenhouse at dusk",
+    "between two mirrors","in a library after closing","on a frozen lake","inside a paper lantern",
+    "at a carnival in the rain","in the eye of a storm","along a foggy harbour","in a cave lit by phones",
+    "in a city that never sleeps","at the end of the world","in a half-remembered dream","on a long road trip",
+    "in the last hour before dawn","at a crowded wedding","in an empty theatre","during a power cut",
+    "in a town that floods each year","at a border crossing","in the back of a moving van","on an island of one",
+    "in a house that is slowly sinking","at a festival just after it ends","in a waiting room","on a ferris wheel stuck at the top"],
+  mood:["melancholy","jubilant","eerie","tender","chaotic","serene","nostalgic","defiant","dreamlike",
+    "playful","austere","feverish","wistful","tense","luminous","quiet","mischievous","reverent",
+    "absurd","triumphant","lonely","giddy","ominous","hopeful","restless","bittersweet","ferocious",
+    "gentle","uncanny","euphoric","brooding","whimsical","sacred","frantic","drowsy","electric",
+    "haunted","mischievously joyful","tender but doomed","calm before chaos",
+    "deadpan","tender and absurd","quietly furious","hopeful against the odds","heartbroken but funny",
+    "reckless","awestruck","claustrophobic","weightless","grieving","celebratory","sly","sincere to a fault",
+    "anxious and bright","wistful for a future that never came","numb","tenderly ridiculous","defiantly soft"],
+  constraint:["in under thirty minutes","at miniature scale","using only what's on your desk",
+    "from memory, no reference","larger than your arm span","using your non-dominant hand",
+    "repeating one motif throughout","built from a single idea","with one bold empty space",
+    "using only three elements","with a strict structure or grid","without your usual go-to move",
+    "as fast and rough as you can","as slow and careful as you can","with a deliberate flaw left in",
+    "made for a specific person","that must fit in one hand","that uses something broken or found",
+    "with a hidden detail only you'll know","that you give away when it's done",
+    "shaped as a haiku","shaped as a sonnet","shaped as a limerick","told in exactly six words",
+    "as a repeating refrain","with a strict rhythm or beat","built from a single metaphor","as a list or catalogue",
+    "telling a whole story","with no beginning or end","that loops back to where it started",
+    "inspired by a sound you heard today","using a colour you dislike","named before you make it",
+    "in the style of someone you admire","that could be finished by a stranger","with the rules written by a dice roll"]
+};
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+const mixBtn=document.getElementById('mix');
+const brief=document.getElementById('brief');
+const briefTag=document.getElementById('briefTag');
+const briefLine=document.getElementById('briefLine');
+const briefStart=document.getElementById('briefStart');
+const briefTut=document.getElementById('briefTut');
+let lastCraft=-1;
+
+/* ---- materials / equipment level per craft ----
+   low = pen, paper, phone, household stuff
+   moderate = some kit or a dedicated space
+   advanced = specialist tools, kilns, forges, studios, costly gear */
+const LEVEL_BY_NAME={
+  // explicit overrides where category alone would mislead
+  "Glassblowing":"advanced","Stained Glass":"advanced","Fused Glass":"advanced","Lampworking":"advanced",
+  "Blacksmithing":"advanced","Silversmithing":"advanced","Enamelling":"advanced",
+  "Wheel Throwing":"advanced","Raku":"advanced","Glazing":"advanced",
+  "Oil Painting":"moderate","Screen Printing":"advanced","Etching":"advanced","Woodturning":"advanced",
+  "Stone Carving":"advanced","3D Printing":"advanced","VFX / Compositing":"advanced",
+  "Music Production":"moderate","DJing / Turntablism":"advanced","Filmmaking":"advanced",
+  "Animation":"moderate","2D Hand-drawn Animation":"moderate","Claymation":"moderate",
+  "Upholstery":"advanced","Furniture Restoration":"advanced","Glassblowing ":"advanced",
+  "Woodworking":"advanced","Bonsai":"moderate","Soap Making":"moderate","Candle Making":"moderate",
+  // clearly low even if their category is mixed
+  "Flipbook Animation":"low","Journaling":"low","Microfiction":"low","Flash Fiction":"low",
+  "Poetry (Free Verse)":"low","Formal Poetry":"low","Storytelling":"low","Origami":"low",
+  "Whittling":"low","Collage":"low","Zine Making":"low","Beatboxing":"low","Improv":"low",
+  "Acting":"low","Mime / Physical Theatre":"low","Gesture Drawing":"low","Contour / Continuous Line":"low"
+};
+const LEVEL_BY_CAT={
+  "Creative Writing":"low","Comics & Sequential":"low","Mind & Play":"low",
+  "Drawing & Painting":"low","Paper & Book":"low","Techniques & Methods":"low",
+  "Digital & New Media":"moderate","Printmaking":"moderate","Textile & Fibre":"moderate",
+  "Sound & Performance":"low","Sound & Music":"moderate","Stage & Screen":"low",
+  "Film & Video":"moderate","Culinary Arts":"moderate","Culinary & Botanical":"low",
+  "Home & Practical":"moderate","Found & Ephemeral":"low","Toy & Tabletop":"moderate",
+  "Body & Costume":"moderate","Craft & Making":"moderate","Design & Spatial":"low",
+  "Ceramics":"advanced","Glass":"advanced","Metal & Jewellery":"advanced",
+  "Sculpture & 3D":"moderate","Wood & Leather":"moderate","Mosaic & Surface":"moderate",
+  "Lens & Time-based":"moderate"
+};
+function levelOf(e){ return LEVEL_BY_NAME[e.name] || LEVEL_BY_CAT[e.category] || "moderate"; }
+
+let activeLevel='any';
+let currentPrompt=null;
+const FAV_KEY='creatives-index-favourites';
+let storageOK=false;
+function loadFavs(){
+  try{
+    const raw=localStorage.getItem(FAV_KEY);
+    storageOK=true;
+    return raw?JSON.parse(raw):[];
+  }catch(e){ storageOK=false; return []; }
+}
+function saveStore(){
+  if(!storageOK) return;
+  try{ localStorage.setItem(FAV_KEY, JSON.stringify(favourites)); }catch(e){}
+}
+const favourites=loadFavs();
+
+function mix(skipFlash){
+  let pool=activeCat==='All'?ENTRIES:ENTRIES.filter(e=>e.category===activeCat);
+  if(activeLevel!=='any') pool=pool.filter(e=>levelOf(e)===activeLevel);
+  if(pool.length===0) pool=ENTRIES.filter(e=>levelOf(e)===activeLevel); // fall back across all categories
+  if(pool.length===0) pool=ENTRIES;
+  let i;do{i=Math.floor(Math.random()*pool.length);}while(pool.length>1&&pool[i]===ENTRIES[lastCraft]);
+  const e=pool[i];lastCraft=ENTRIES.indexOf(e);
+  const cc=catColor(e.category);
+  const subj=pick(TOPICS.subject), set=pick(TOPICS.setting),
+        mood=pick(TOPICS.mood), con=pick(TOPICS.constraint);
+  brief.style.borderLeftColor=cc;
+  briefTag.style.color=cc;
+  briefTag.textContent=e.category;
+  briefTut.href=`https://www.youtube.com/results?search_query=${encodeURIComponent(e.name+" tutorial for beginners")}`;
+  briefTut.style.setProperty('--cc',cc);
+  briefLine.innerHTML=`Make <b>${e.name.toLowerCase()}</b> of ${subj}, ${set} — ${mood} in feeling, ${con}.`;
+  const exA = e.examples[Math.floor(Math.random()*e.examples.length)];
+  briefStart.innerHTML=`<b>Simple start:</b> if that's a lot, just begin with ${exA.charAt(0).toLowerCase()+exA.slice(1).replace(/\.$/,'')} — then fold in the ${mood} mood, or the twist, one at a time.`;
+  briefStart.hidden=false;
+  currentPrompt={
+    id:`${e.name}|${subj}|${set}|${mood}|${con}`,
+    craft:e.name, category:e.category, cc,
+    text:`Make ${e.name.toLowerCase()} of ${subj}, ${set} — ${mood} in feeling, ${con}.`,
+    tut:briefTut.href
+  };
+  syncFavBtn();
+  if(!skipFlash){brief.classList.remove('flash');void brief.offsetWidth;brief.classList.add('flash');}
+}
+mixBtn.addEventListener('click',()=>mix());
+
+/* ---------------- materials level selector ---------------- */
+const levelBtns=document.querySelectorAll('.lvl');
+levelBtns.forEach(b=>{
+  b.addEventListener('click',()=>{
+    activeLevel=b.dataset.level;
+    levelBtns.forEach(x=>x.setAttribute('aria-pressed', String(x===b)));
+    mix();
+  });
+});
+
+/* ---------------- favourites ---------------- */
+const favBtn=document.getElementById('favBtn');
+const favIco=favBtn.querySelector('.fav-ico');
+const favTxt=favBtn.querySelector('.fav-txt');
+const favsSection=document.getElementById('favs');
+const favsList=document.getElementById('favsList');
+const favsCount=document.getElementById('favsCount');
+const favsClear=document.getElementById('favsClear');
+
+function isSaved(){ return currentPrompt && favourites.some(f=>f.id===currentPrompt.id); }
+function syncFavBtn(){
+  const saved=isSaved();
+  favBtn.setAttribute('aria-pressed',String(saved));
+  favIco.textContent=saved?'♥':'♡';
+  favTxt.textContent=saved?'Saved':'Save';
+}
+function renderFavs(){
+  favsCount.textContent=favourites.length;
+  favsSection.hidden=favourites.length===0;
+  favsList.innerHTML='';
+  favourites.forEach(f=>{
+    const li=document.createElement('li');
+    li.className='fav-item';li.style.setProperty('--cc',f.cc);
+    li.innerHTML=`
+      <div class="fav-line">
+        <span class="fav-cat">${f.category}</span>
+        ${f.text.replace(f.craft.toLowerCase(),`<b>${f.craft.toLowerCase()}</b>`)}
+        <a class="tut" href="${f.tut}" target="_blank" rel="noopener" style="--cc:${f.cc};margin:10px 0 0">Find tutorials ↗</a>
+      </div>
+      <button class="fav-remove" aria-label="Remove from favourites">✕</button>`;
+    li.querySelector('.fav-remove').addEventListener('click',()=>{
+      const idx=favourites.findIndex(x=>x.id===f.id);
+      if(idx>-1) favourites.splice(idx,1);
+      saveStore();renderFavs();syncFavBtn();
+    });
+    favsList.appendChild(li);
+  });
+}
+favBtn.addEventListener('click',()=>{
+  if(!currentPrompt) return;
+  const idx=favourites.findIndex(f=>f.id===currentPrompt.id);
+  if(idx>-1) favourites.splice(idx,1);
+  else favourites.unshift({...currentPrompt});
+  saveStore();renderFavs();syncFavBtn();
+});
+favsClear.addEventListener('click',()=>{ favourites.length=0; saveStore(); renderFavs(); syncFavBtn(); });
+
+/* pinned favourites button */
+const favPin=document.getElementById('favPin');
+const favPinCount=document.getElementById('favPinCount');
+const _renderFavs=renderFavs;
+renderFavs=function(){
+  _renderFavs();
+  favPinCount.textContent=favourites.length;
+  favPin.hidden=favourites.length===0;
+};
+favPin.addEventListener('click',()=>{
+  favsSection.scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+renderFavs(); // restore any saved favourites on load
+mix(true); // generate an initial prompt on load, no flash
+</script>
+</body>
+</html>
