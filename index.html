@@ -23,6 +23,7 @@
     overflow-x:hidden;position:relative}
   h1,h2,h3,.line,.kicker,.tag,.go,.fork a,.lvl,.chip,.fav-btn,.tut,.cat-name,.cat-eg{-webkit-text-fill-color:currentColor}
   .wrap{max-width:820px;margin:0 auto;padding:0 22px;position:relative;z-index:2}
+  .hero{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:clamp(12px,4vh,40px)}
 
   /* wandering dotted path */
   .path-bg{position:absolute;inset:0;z-index:1;pointer-events:none;width:100%;height:100%}
@@ -37,7 +38,7 @@
   .lede{font-size:15px;color:var(--ink-soft);max-width:48ch;margin-top:20px;line-height:1.65}
 
   /* prompt on splatter */
-  .stage{position:relative;margin:40px 0 0;padding:6px 0;display:flex;flex-direction:column;align-items:flex-start;gap:22px}
+  .stage{position:relative;padding:6px 0;display:flex;flex-direction:column;align-items:flex-start;gap:22px}
   .splat-wrap{position:relative;width:100%;max-width:600px;min-height:340px;display:flex;align-items:center;justify-content:center}
   .splat{position:absolute;inset:-6% -4%;width:108%;height:112%;z-index:0;pointer-events:none}
   .splat path{transition:fill .25s}
@@ -90,13 +91,31 @@
   .cat-title{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:30px}
   .cat-close{font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     background:none;border:1.5px solid var(--line);color:var(--ink-soft);padding:6px 12px;border-radius:20px;cursor:pointer}
-  .cat-filters{display:flex;flex-wrap:wrap;gap:7px 9px;margin-bottom:24px}
-  .chip{font-family:"DM Mono",monospace;font-size:12px;background:none;border:1.5px solid var(--line);color:var(--ink-soft);
-    padding:7px 12px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
-    transition:border-color .15s,color .15s,background .15s}
-  .chip .dot{width:9px;height:9px;border-radius:50%;background:var(--cc,var(--coral))}
-  .chip[aria-pressed="true"]{background:var(--cc,var(--ink));border-color:var(--cc,var(--ink));color:#fff}
-  .chip[data-cat="All"][aria-pressed="true"]{background:var(--ink);border-color:var(--ink)}
+  .cat-filters{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:center;
+    margin:0 auto 26px;max-width:740px;line-height:1.4;text-align:center}
+  .chip{background:none;border:0;padding:2px;cursor:pointer;position:relative;color:var(--ink);
+    line-height:1.05;display:inline-flex;align-items:baseline;gap:6px;
+    transform:rotate(var(--rot,0deg)) translateY(var(--dy,0));
+    transition:color .15s,opacity .15s,transform .2s}
+  .chip{font-family:"Bricolage Grotesque",sans-serif;font-weight:800}
+  .chip:nth-child(3n){font-family:"DM Mono",monospace;font-weight:500}
+  .chip:nth-child(4n){font-family:"Bricolage Grotesque",sans-serif;font-weight:400}
+  .chip:nth-child(2n){font-weight:600}
+  .chip .dot{width:.42em;height:.42em;border-radius:50%;background:var(--cc,var(--coral));align-self:center;flex:none}
+  .chip::after{content:"";position:absolute;left:0;right:100%;bottom:-2px;height:3px;
+    background:var(--cc,var(--coral));border-radius:2px;transition:right .22s ease}
+  .chip:hover{color:var(--cc,var(--coral))}
+  .chip:hover::after{right:0}
+  .chip[aria-pressed="true"]{color:var(--cc,var(--coral))}
+  .chip[aria-pressed="true"]::after{right:0;height:4px}
+  .chip[data-cat="All"]{--cc:var(--ink)}
+  .chip[data-cat="All"] .dot{display:none}
+  .chip:not([aria-pressed="true"]){opacity:.62}
+  .chip:hover,.chip[aria-pressed="true"]{opacity:1}
+  .cat-reshuffle{font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    background:none;border:1.5px solid var(--line);color:var(--ink-soft);padding:6px 12px;border-radius:20px;cursor:pointer;
+    width:100%;max-width:max-content;margin:0 auto 16px}
+  .cat-reshuffle:hover{border-color:var(--coral);color:var(--coral)}
   .cat-count{font-size:12px;color:var(--ink-soft);letter-spacing:.1em;margin-bottom:16px}
   .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
   .cat-item{border:2px solid var(--ink);border-radius:3px;padding:18px;background:#fff;
@@ -137,35 +156,39 @@
 
   /* fit the hero (header + prompt + controls) in one mobile viewport */
   @media (max-width:600px){
-    .wrap{padding:0 18px}
-    header{padding:18px 0 0;min-height:auto}
-    .kicker{font-size:10px;padding:5px 9px}
-    h1{font-size:clamp(34px,11vw,52px);margin:10px 0 0}
-    .lede{font-size:12.5px;margin-top:10px;line-height:1.5;max-width:38ch;
-      display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    .stage{margin:8px 0 0;gap:8px}
-    .splat-wrap{min-height:200px;max-width:100%}
-    .splat{inset:-4% -2%;width:104%;height:108%}
-    .prompt{padding:14px 20px;max-width:100%}
-    .prompt .tag{font-size:10px}
-    .prompt .line{font-size:clamp(18px,5vw,23px);line-height:1.18;margin-top:8px}
-    .hint-wrap{min-height:96px;max-width:230px;margin:-26px 0 0 auto}
-    .hint-splat{inset:-26% -22%;width:144%;height:152%}
-    .hint{font-size:11px;padding:12px 16px;line-height:1.4}
-    .actions{gap:9px}
-    .go{font-size:13px;padding:12px 20px}
-    .fav-btn{font-size:11px;padding:9px 13px}
+    .wrap{padding:0 16px}
+    header{padding:14px 0 0;min-height:auto}
+    .kicker{font-size:9.5px;padding:4px 8px}
+    h1{font-size:clamp(30px,10vw,46px);margin:8px 0 0;line-height:.9}
+    .lede{font-size:11.5px;margin-top:8px;line-height:1.45;max-width:40ch;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .stage{margin:4px 0 0;gap:4px}
+    .splat-wrap{min-height:158px;max-width:100%}
+    .splat{inset:-3% -2%;width:104%;height:106%}
+    .prompt{padding:10px 18px;max-width:100%}
+    .prompt .tag{font-size:9.5px}
+    .prompt .line{font-size:clamp(16px,4.5vw,20px);line-height:1.16;margin-top:6px}
+    .hint-wrap{min-height:76px;max-width:215px;margin:-30px 0 0 auto}
+    .hint-splat{inset:-28% -24%;width:148%;height:156%}
+    .hint{font-size:10.5px;padding:10px 14px;line-height:1.35}
+    .actions{gap:8px;margin-top:2px}
+    .go{font-size:13px;padding:11px 18px}
+    .fav-btn{font-size:11px;padding:8px 12px}
     .tut{font-size:11px}
-    .levels{gap:6px;margin-top:2px}
-    .levels-label{font-size:10px;margin-bottom:2px}
-    .lvl{font-size:10.5px;padding:6px 10px}
-    .fork{font-size:12.5px;margin-top:4px}
+    .levels{gap:5px;margin-top:0}
+    .levels-label{font-size:9.5px;margin-bottom:2px}
+    .lvl{font-size:10px;padding:5px 9px}
+    .fork{font-size:12px;margin-top:2px}
+    .note{margin:24px 0 50px;font-size:11px}
+    .cat-filters .chip{font-size:1rem !important}
+    .cat-filters .chip[data-cat="All"]{font-size:1.2rem !important}
   }
   /* very short screens: trim further */
-  @media (max-width:600px) and (max-height:740px){
-    .lede{-webkit-line-clamp:2}
-    .splat-wrap{min-height:170px}
-    .hint-wrap{min-height:84px}
+  @media (max-width:600px) and (max-height:760px){
+    .lede{-webkit-line-clamp:1}
+    .splat-wrap{min-height:140px}
+    .hint-wrap{min-height:66px;margin-top:-34px}
+    .prompt .line{font-size:clamp(15px,4.2vw,18px)}
   }
 </style>
 </head>
@@ -175,6 +198,7 @@
   <path d="M130,40 C220,130 70,210 170,300 C270,390 120,480 230,560 C340,640 180,740 270,840 C360,940 200,1040 300,1140"/>
 </svg>
 <div class="wrap">
+  <div class="hero">
   <header>
     <span class="kicker">No wrong turns — only happy accidents</span>
     <h1>The <span class="a">Creatives'</span> <span class="b">Index</span></h1>
@@ -191,7 +215,7 @@
             <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
           </radialGradient></defs>
           <path class="splat-fill" d="" fill="currentColor"/>
-          <ellipse cx="100" cy="98" rx="86" ry="64" fill="url(#core)"/>
+          <path class="core-fill" d="" fill="url(#core)"/>
         </svg>
         <div class="prompt">
           <span class="tag" id="tag"></span>
@@ -206,7 +230,7 @@
             <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
           </radialGradient></defs>
           <path class="hint-fill" d="" fill="currentColor"/>
-          <ellipse cx="100" cy="100" rx="74" ry="70" fill="url(#hcore)"/>
+          <path class="hcore-fill" d="" fill="url(#hcore)"/>
         </svg>
         <div class="hint" id="hint"></div>
       </div>
@@ -228,6 +252,7 @@
 
     <div class="fork">…or <button id="openCat">wander the full catalogue →</button></div>
   </div>
+  </div><!-- /hero -->
 
   <section class="favs" id="favs">
     <div class="favs-head">
@@ -242,6 +267,7 @@
       <span class="cat-title">The catalogue</span>
       <button class="cat-close" id="catClose">✕ close</button>
     </div>
+    <button class="cat-reshuffle" id="catReshuffle">↻ rearrange</button>
     <div class="cat-filters" id="catFilters"></div>
     <div class="cat-count" id="catCount"></div>
     <div class="cat-grid" id="catGrid"></div>
@@ -535,6 +561,18 @@ function blob(){
     d+=` M${x.toFixed(0)},${(y-rr).toFixed(0)} a${rr.toFixed(0)},${rr.toFixed(0)} 0 1,0 0.1,0 Z`;}
   return d;
 }
+function coreBlob(maxR){
+  // soft irregular blob (no satellites) to back the text — smaller than the splat
+  const cx=100,cy=100,pts=9;let d="";
+  for(let i=0;i<pts;i++){
+    const a=(i/pts)*Math.PI*2, r=maxR*(0.72+Math.random()*0.28);
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    const ca=a-0.5, cr=r*(1.0+Math.random()*0.15);
+    const qx=cx+Math.cos(ca)*cr, qy=cy+Math.sin(ca)*cr;
+    d+=(i===0?`M${x.toFixed(0)},${y.toFixed(0)}`:` Q${qx.toFixed(0)},${qy.toFixed(0)} ${x.toFixed(0)},${y.toFixed(0)}`);
+  }
+  return d+"Z";
+}
 function blobSmall(){
   const cx=100,cy=100,pts=11;let d="";
   for(let i=0;i<pts;i++){
@@ -572,9 +610,11 @@ function mix(first){
   const mainColor=COLORS[Math.floor(Math.random()*COLORS.length)];
   splat.querySelector('.splat-fill').setAttribute('d',blob());
   splat.querySelector('.splat-fill').setAttribute('fill',mainColor);
+  splat.querySelector('.core-fill').setAttribute('d',coreBlob(82));
   let hc;do{hc=COLORS[Math.floor(Math.random()*COLORS.length)];}while(hc===mainColor);
   hintSplat.querySelector('.hint-fill').setAttribute('d',blobSmall());
   hintSplat.querySelector('.hint-fill').setAttribute('fill',hc);
+  hintSplat.querySelector('.hcore-fill').setAttribute('d',coreBlob(78));
   currentPrompt={id:`${e.name}|${subj}|${set}|${mood}|${con}`,craft:e.name,category:e.category,cc,
     text:`Make ${e.name.toLowerCase()} of ${subj}, ${set} — ${mood} in feeling, ${con}.`,tut:tutEl.href};
   syncFavBtn();
@@ -618,12 +658,24 @@ favPin.addEventListener('click',()=>favs.scrollIntoView({behavior:'smooth',block
 /* ---------- catalogue ---------- */
 const catalogue=document.getElementById('catalogue'),catGrid=document.getElementById('catGrid'),catCount=document.getElementById('catCount'),catFilters=document.getElementById('catFilters');
 let activeCat='All';
-categories.forEach(cat=>{
-  const b=document.createElement('button');b.className='chip';b.dataset.cat=cat;b.setAttribute('aria-pressed',cat==='All');
-  if(cat!=='All'){b.style.setProperty('--cc',catColor(cat));b.innerHTML=`<span class="dot"></span>${cat}`;}else{b.textContent='All';}
-  b.addEventListener('click',()=>{activeCat=cat;catFilters.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x.dataset.cat===activeCat));renderCat();});
-  catFilters.appendChild(b);
-});
+const CAT_SIZES=[1.0,1.15,1.3,1.5,1.7,1.9];
+function shuffleArr(a){const r=a.slice();for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+function scatterCats(){
+  catFilters.innerHTML='';
+  const rest=shuffleArr(categories.filter(c=>c!=='All'));
+  ['All',...rest].forEach(cat=>{
+    const b=document.createElement('button');b.className='chip';b.dataset.cat=cat;b.setAttribute('aria-pressed',cat===activeCat);
+    if(cat!=='All'){b.style.setProperty('--cc',catColor(cat));b.innerHTML=`<span class="dot"></span>${cat}`;}else{b.textContent='All';}
+    const size=cat==='All'?1.45:CAT_SIZES[Math.floor(Math.random()*CAT_SIZES.length)];
+    b.style.fontSize=`${size}rem`;
+    b.style.setProperty('--rot',`${(Math.random()*7-3.5).toFixed(2)}deg`);
+    b.style.setProperty('--dy',`${(Math.random()*10-5).toFixed(1)}px`);
+    b.addEventListener('click',()=>{activeCat=cat;catFilters.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x.dataset.cat===activeCat));renderCat();});
+    catFilters.appendChild(b);
+  });
+}
+scatterCats();
+document.getElementById('catReshuffle').addEventListener('click',scatterCats);
 function renderCat(){
   const list=activeCat==='All'?ENTRIES:ENTRIES.filter(e=>e.category===activeCat);
   catCount.textContent=`${list.length} ENTRIES · ${categories.length-1} CATEGORIES`;
