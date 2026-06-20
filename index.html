@@ -23,11 +23,16 @@
     overflow-x:hidden;position:relative}
   h1,h2,h3,.line,.kicker,.tag,.go,.fork a,.lvl,.chip,.fav-btn,.tut,.cat-name,.cat-eg{-webkit-text-fill-color:currentColor}
   .wrap{max-width:820px;margin:0 auto;padding:0 22px;position:relative;z-index:2}
-  .hero{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:clamp(12px,4vh,40px)}
+  .hero{min-height:100dvh;display:flex;flex-direction:column;justify-content:flex-start;
+    padding-top:clamp(20px,5vh,52px);gap:clamp(14px,3vh,32px)}
 
   /* wandering dotted path */
-  .path-bg{position:absolute;inset:0;z-index:1;pointer-events:none;width:100%;height:100%}
-  .path-bg path{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:2 11;stroke-linecap:round;opacity:.32}
+  .path-bg{position:absolute;inset:0;z-index:0;pointer-events:none;width:100%;height:100%}
+  .bg-path{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:2 11;stroke-linecap:round;opacity:.28}
+  .bg-blob{opacity:.10}
+  .bg-doodle{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.22}
+  .bg-ring{fill:none;stroke-width:2.4;opacity:.18}
+  .bg-dot{opacity:.16}
 
   header{padding:52px 0 14px;position:relative}
   .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);
@@ -194,8 +199,8 @@
 </head>
 <body>
 <button class="fav-pin" id="favPin" aria-label="Jump to saved prompts"><span>★</span><span class="c" id="favPinCount">0</span></button>
-<svg class="path-bg" viewBox="0 0 820 1400" preserveAspectRatio="none" aria-hidden="true">
-  <path d="M130,40 C220,130 70,210 170,300 C270,390 120,480 230,560 C340,640 180,740 270,840 C360,940 200,1040 300,1140"/>
+<svg class="path-bg" id="bgArt" viewBox="0 0 820 1500" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+  <path class="bg-path" d="M130,40 C220,130 70,210 170,300 C270,390 120,480 230,560 C340,640 180,740 270,840 C360,940 200,1040 300,1140 C390,1230 240,1320 330,1420"/>
 </svg>
 <div class="wrap">
   <div class="hero">
@@ -693,6 +698,47 @@ function renderCat(){
 }
 document.getElementById('openCat').addEventListener('click',()=>{catalogue.classList.add('open');if(!catGrid.children.length)renderCat();catalogue.scrollIntoView({behavior:'smooth',block:'start'});});
 document.getElementById('catClose').addEventListener('click',()=>{catalogue.classList.remove('open');document.querySelector('header').scrollIntoView({behavior:'smooth'});});
+
+/* ---------- init ---------- */
+/* ---------- scattered background art ---------- */
+function scatterArt(){
+  const svg=document.getElementById('bgArt');
+  const W=820,H=1500;
+  const inks=COLORS.concat(['#1c1a26']);
+  const SVGNS='http://www.w3.org/2000/svg';
+  const add=(tag,attrs,cls)=>{const el=document.createElementNS(SVGNS,tag);for(const k in attrs)el.setAttribute(k,attrs[k]);if(cls)el.setAttribute('class',cls);svg.appendChild(el);};
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  // small paint blobs
+  for(let i=0;i<7;i++){
+    const cx=rnd(40,W-40),cy=rnd(120,H-60),scale=rnd(0.25,0.6);
+    let d="";const pts=8;
+    for(let j=0;j<pts;j++){const a=(j/pts)*Math.PI*2,r=(46+Math.random()*30)*scale;
+      const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;const ca=a-0.4,cr=r*1.15;
+      const qx=cx+Math.cos(ca)*cr,qy=cy+Math.sin(ca)*cr;
+      d+=(j===0?`M${x.toFixed(0)},${y.toFixed(0)}`:` Q${qx.toFixed(0)},${qy.toFixed(0)} ${x.toFixed(0)},${y.toFixed(0)}`);}
+    d+="Z";
+    add('path',{d,fill:inks[Math.floor(Math.random()*inks.length)]},'bg-blob');
+  }
+  // line doodles: spiral, squiggle, zigzag, loop
+  for(let i=0;i<6;i++){
+    const cx=rnd(30,W-30),cy=rnd(140,H-60),col=inks[Math.floor(Math.random()*inks.length)];
+    const t=Math.floor(Math.random()*4);let d="";
+    if(t===0){ // spiral
+      d=`M${cx},${cy}`;for(let s=0;s<26;s++){const a=s*0.6,r=s*1.6;d+=` L${(cx+Math.cos(a)*r).toFixed(0)},${(cy+Math.sin(a)*r).toFixed(0)}`;}
+    }else if(t===1){ // squiggle
+      d=`M${cx},${cy}`;for(let s=1;s<=6;s++){d+=` Q${(cx+s*16-8).toFixed(0)},${(cy+(s%2?-22:22)).toFixed(0)} ${(cx+s*16).toFixed(0)},${cy}`;}
+    }else if(t===2){ // zigzag
+      d=`M${cx},${cy}`;for(let s=1;s<=7;s++){d+=` L${(cx+s*14).toFixed(0)},${(cy+(s%2?-18:18)).toFixed(0)}`;}
+    }else{ // loop-de-loop
+      d=`M${cx},${cy} c20,-30 50,-30 50,0 c0,30 -50,30 -30,-6`;
+    }
+    add('path',{d,stroke:col},'bg-doodle');
+  }
+  // rings & dots
+  for(let i=0;i<5;i++){add('circle',{cx:rnd(40,W-40),cy:rnd(140,H-60),r:rnd(10,28),stroke:inks[Math.floor(Math.random()*inks.length)]},'bg-ring');}
+  for(let i=0;i<14;i++){add('circle',{cx:rnd(20,W-20),cy:rnd(120,H-40),r:rnd(2,6),fill:inks[Math.floor(Math.random()*inks.length)]},'bg-dot');}
+}
+scatterArt();
 
 /* ---------- init ---------- */
 renderFavs();
